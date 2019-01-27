@@ -154,6 +154,7 @@ pub fn measured(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     drop(reg_fields);
 
+    // TODO: ensure we always have metrics the same order.
     for (fun_name, measure_request_attrs) in measured.iter() {
         use heck::CamelCase;
         let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
