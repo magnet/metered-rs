@@ -1,7 +1,5 @@
-[package]
-name = "metered"
-version = "0.1.0"
-authors = ["Simon Chemouil <simonc@btcx.com>"]
-edition = "2018"
-
-[dependencies]
+[workspace]
+members = [
+  "metered-core",
+  "metered-macro",
+]
