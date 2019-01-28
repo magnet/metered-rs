@@ -1,7 +1,8 @@
 #![feature(await_macro, async_await, futures_api)]
 
 use metered::*;
-
+mod metered_impl;
+use metered_impl::Baz;
 
 #[derive(Default, Debug)]
 struct TestMetrics {
@@ -24,8 +25,7 @@ fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
     })
 }
 
-mod measured_impl;
-use measured_impl::Baz;
+
 
 async fn async_demo() {
     let baz = Baz::default();
