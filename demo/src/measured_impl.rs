@@ -1,12 +1,11 @@
-use metered_core::*;
-use metered_macro::measured;
+use metered::*;
 
 #[derive(Default, Debug)]
 pub struct Baz {
     registry: MetricRegistry,
 }
 
-#[measured]
+#[metered]
 impl Baz {
     #[measure(ReponseTime)]
     pub fn foo(&self) {
@@ -27,7 +26,7 @@ impl Baz {
         }
     }
 
-    #[measure(ReponseTime)]
+    #[measure(type = [ErrorCount, ReponseTime])]
     pub async fn baz(&self, should_fail: bool)  -> Result<(), &'static str> {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 

@@ -1,5 +1,5 @@
 [package]
-name = "metered-core"
+name = "metered"
 version = "0.1.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 edition = "2018"
@@ -9,4 +9,3 @@ hdrhistogram = "6.1.1"
 metered-macro = { path = "../metered-macro", version = "0.1.0" }
 atomic = "0.4"
 atomic_refcell = "0.1.3"
-

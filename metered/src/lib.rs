@@ -1,6 +1,8 @@
 #![feature(await_macro, async_await, futures_api)]
 
 
+pub use metered_macro::metered;
+
 pub trait Metric<R>: Default + Enter {    
     fn on_result(&self, enter: <Self as Enter>::E, result: R) -> R {
         self.with_result(enter, &result);

@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "metered-core",
+  "metered",
   "metered-macro",
 ]
