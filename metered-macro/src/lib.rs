@@ -1,5 +1,3 @@
-#![feature(proc_macro_diagnostic, proc_macro_span)]
-#![feature(custom_attribute)]
 // The `quote!` macro requires deep recursion.
 #![recursion_limit = "512"]
 
