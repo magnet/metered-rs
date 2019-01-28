@@ -1,7 +1,6 @@
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
-
 use crate::attrs_common::*;
 
 pub struct Metered<'a> {
@@ -9,11 +8,9 @@ pub struct Metered<'a> {
     pub registry_name: String,
 }
 
-
 pub struct MeteredKeyValAttribute {
     pub values: syn::punctuated::Punctuated<MeteredOption, Token![,]>,
 }
-
 
 impl MeteredKeyValAttribute {
     fn validate(&self, input: ParseStream) -> Result<()> {
@@ -27,11 +24,7 @@ impl MeteredKeyValAttribute {
                 }
             })
             .next()
-            .ok_or_else(|| {
-                input.error(
-                    "missing `registry` attribute.",
-                )
-            })?;
+            .ok_or_else(|| input.error("missing `registry` attribute."))?;
 
         let opt_types: std::collections::HashMap<_, _> = self
             .values
@@ -72,9 +65,8 @@ impl MeteredKeyValAttribute {
 
         Metered {
             registry,
-            registry_name
+            registry_name,
         }
-        
     }
 }
 
@@ -90,33 +82,29 @@ impl Parse for MeteredKeyValAttribute {
     }
 }
 
-
 custom_keyword!(RegistryKW, registry);
-
 
 pub type MeteredRegistryOption = KVOption<RegistryKW, syn::Ident>;
 
-pub enum MeteredOption {    
+pub enum MeteredOption {
     Registry(MeteredRegistryOption),
-    _Unused
+    _Unused,
 }
 
 impl MeteredOption {
     pub fn as_str(&self) -> &str {
         match self {
             MeteredOption::Registry(opt) => opt.key.as_ref(),
-            MeteredOption::_Unused => "unused"
+            MeteredOption::_Unused => "unused",
         }
     }
 }
 
 impl Parse for MeteredOption {
     fn parse(input: ParseStream) -> Result<Self> {
-        input
-            .try_parse_as(MeteredOption::Registry)
-            .map_err(|_| {
-                let err = format!("invalid metered option: {}", input.to_string());
-                input.error(err)
-            })
+        input.try_parse_as(MeteredOption::Registry).map_err(|_| {
+            let err = format!("invalid metered option: {}", input.to_string());
+            input.error(err)
+        })
     }
 }

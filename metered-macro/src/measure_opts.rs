@@ -1,7 +1,6 @@
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
-
 use crate::attrs_common::*;
 
 pub struct MeasureRequest<'a> {
@@ -207,17 +206,11 @@ impl Parse for MeasureRequestKeyValAttribute {
     }
 }
 
-
-
-
 token_keyword!(TypeKW, type);
 custom_keyword!(DebugKW, debug);
 
-
 pub type MeasureTypeOption = KVOption<TypeKW, MultipleVal<syn::TypePath>>;
 pub type MeasureDebugOption = KVOption<DebugKW, InvokePath>;
-
-
 
 pub enum MeasureOptions {
     Type(MeasureTypeOption),

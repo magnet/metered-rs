@@ -1,11 +1,9 @@
 use proc_macro::TokenStream;
 
-use syn::{parse_macro_input};
-
+use syn::parse_macro_input;
 
 use crate::measure_opts::MeasureRequestAttribute;
 use crate::metered_opts::MeteredKeyValAttribute;
-
 
 pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let attrs = parse_macro_input!(attrs as MeteredKeyValAttribute);
@@ -124,8 +122,6 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     // println!("Result {}", result.to_string());
     result
 }
-
-
 
 fn measure_list<'a>(
     qualified_registry_name: &'a str,

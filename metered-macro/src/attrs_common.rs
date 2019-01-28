@@ -5,7 +5,6 @@ use std::convert::AsRef;
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
-
 /// A Key Value option.
 pub struct KVOption<K: Parse + AsRef<str>, V: Parse> {
     pub key: K,
@@ -24,7 +23,6 @@ impl<K: Parse + AsRef<str>, V: Parse> Parse for KVOption<K, V> {
         })
     }
 }
-
 
 /// Single or [MultipleA, MultipleB] values.
 pub enum MultipleVal<T: Parse> {
@@ -64,12 +62,8 @@ impl<T: Parse> Parse for MultipleValArray<T> {
     }
 }
 
-
-
-
-
 macro_rules! custom_keyword {
-    ($name:ident, $keyword:tt) => {       
+    ($name:ident, $keyword:tt) => {
         pub struct $name {
             pub ident: syn::Ident,
         }
@@ -96,7 +90,7 @@ macro_rules! custom_keyword {
 }
 
 macro_rules! token_keyword {
-    ($name:ident, $keyword:tt) => {       
+    ($name:ident, $keyword:tt) => {
         pub struct $name {
             pub token: syn::Token![$keyword],
         }
@@ -109,14 +103,13 @@ macro_rules! token_keyword {
 
         impl Parse for $name {
             fn parse(input: ParseStream) -> Result<Self> {
-                 Ok($name {
+                Ok($name {
                     token: input.parse()?,
-                 })
+                })
             }
         }
     };
 }
-
 
 /// An invocation handle that may be `bar::foo` or `bar::foo!`
 pub struct InvokePath {
@@ -132,8 +125,6 @@ impl Parse for InvokePath {
         })
     }
 }
-
-
 
 pub trait ParseStreamExt {
     fn try_parse<T: syn::parse::Parse>(&self) -> Result<T>;

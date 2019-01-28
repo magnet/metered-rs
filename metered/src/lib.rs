@@ -1,15 +1,14 @@
 #![feature(await_macro, async_await, futures_api)]
 
-
 pub use metered_macro::metered;
 
-pub trait Metric<R>: Default + Enter {    
+pub trait Metric<R>: Default + Enter {
     fn on_result(&self, enter: <Self as Enter>::E, result: R) -> R {
         self.with_result(enter, &result);
         result
     }
 
-    fn with_result(&self, _enter: <Self as Enter>::E, _result: &R){}    
+    fn with_result(&self, _enter: <Self as Enter>::E, _result: &R) {}
 }
 
 pub trait Enter {
@@ -79,14 +78,12 @@ impl_atomic_gauge!(u64);
 impl_atomic_gauge!(u128);
 impl_atomic_gauge!(usize);
 
-
 #[derive(Clone, Default, Debug)]
 pub struct HitCount<C: Counter = Atomic<u64>>(pub C);
 
-
-impl<C: Counter> Enter for HitCount<C>  {
+impl<C: Counter> Enter for HitCount<C> {
     type E = ();
-    fn enter(&self) ->  Self::E {
+    fn enter(&self) -> Self::E {
         self.0.incr();
     }
 }
@@ -96,9 +93,9 @@ impl<C: Counter, R> Metric<R> for HitCount<C> {}
 #[derive(Clone, Default, Debug)]
 pub struct ErrorCount<C: Counter = Atomic<u64>>(C);
 
-impl<C: Counter> Enter for ErrorCount<C>  {
+impl<C: Counter> Enter for ErrorCount<C> {
     type E = ();
-    fn enter(&self)  {}
+    fn enter(&self) {}
 }
 
 impl<C: Counter, T, E> Metric<Result<T, E>> for ErrorCount<C> {
@@ -112,9 +109,9 @@ impl<C: Counter, T, E> Metric<Result<T, E>> for ErrorCount<C> {
 #[derive(Clone, Default, Debug)]
 pub struct InFlight<G: Gauge = Atomic<u64>>(G);
 
-impl<G: Gauge> Enter for InFlight<G>  {
+impl<G: Gauge> Enter for InFlight<G> {
     type E = ();
-    fn enter(&self)  {
+    fn enter(&self) {
         self.0.incr();
     }
 }
@@ -125,7 +122,6 @@ impl<G: Gauge, R> Metric<R> for InFlight<G> {
     }
 }
 
-
 #[macro_export]
 macro_rules! measure {
     ($metric:expr, $e:expr) => {
@@ -133,13 +129,10 @@ macro_rules! measure {
     };
 }
 
-
-
 #[derive(Clone, Default, Debug)]
 pub struct ReponseTime<H: Histogram = AtomicHdrHistogram>(H);
 
-
-impl<H: Histogram> Enter for ReponseTime<H>  {
+impl<H: Histogram> Enter for ReponseTime<H> {
     type E = std::time::Instant;
 
     fn enter(&self) -> std::time::Instant {
@@ -147,11 +140,10 @@ impl<H: Histogram> Enter for ReponseTime<H>  {
     }
 }
 
-impl<H: Histogram, R>  Metric<R> for ReponseTime<H> {
-
+impl<H: Histogram, R> Metric<R> for ReponseTime<H> {
     fn with_result(&self, enter: std::time::Instant, _: &R) {
         let elapsed = enter.elapsed().as_millis() as u64;
-        self.0.record(elapsed);        
+        self.0.record(elapsed);
     }
 }
 
