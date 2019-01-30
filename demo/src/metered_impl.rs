@@ -7,7 +7,7 @@ pub struct Baz {
 
 #[metered(registry = BazMetricRegistry)]
 impl Baz {
-    #[measure(ReponseTime)]
+    #[measure(ResponseTime)]
     pub fn foo(&self) {
         println!("foo !");
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
@@ -16,7 +16,7 @@ impl Baz {
 
     #[measure(type = HitCount<atomic::Atomic<u128>>, debug = println!)]
     #[measure(ErrorCount)]
-    #[measure(ReponseTime)]
+    #[measure(ResponseTime)]
     pub fn bar(&self, should_fail: bool) -> Result<(), &'static str> {
         if !should_fail {
             println!("bar !");
@@ -26,7 +26,7 @@ impl Baz {
         }
     }
 
-    #[measure([ErrorCount, ReponseTime])]
+    #[measure([ErrorCount, ResponseTime])]
     pub async fn baz(&self, should_fail: bool)  -> Result<(), &'static str> {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 

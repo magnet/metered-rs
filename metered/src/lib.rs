@@ -130,9 +130,9 @@ macro_rules! measure {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct ReponseTime<H: Histogram = AtomicHdrHistogram>(H);
+pub struct ResponseTime<H: Histogram = AtomicHdrHistogram>(H);
 
-impl<H: Histogram> Enter for ReponseTime<H> {
+impl<H: Histogram> Enter for ResponseTime<H> {
     type E = std::time::Instant;
 
     fn enter(&self) -> std::time::Instant {
@@ -140,7 +140,7 @@ impl<H: Histogram> Enter for ReponseTime<H> {
     }
 }
 
-impl<H: Histogram, R> Metric<R> for ReponseTime<H> {
+impl<H: Histogram, R> Metric<R> for ResponseTime<H> {
     fn with_result(&self, enter: std::time::Instant, _: &R) {
         let elapsed = enter.elapsed().as_millis() as u64;
         self.0.record(elapsed);
