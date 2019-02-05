@@ -1,60 +1,20 @@
 use proc_macro::TokenStream;
 
-use syn::parse_macro_input;
-
 use crate::measure_opts::MeasureRequestAttribute;
 use crate::metered_opts::MeteredKeyValAttribute;
 
-pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
-    let attrs = parse_macro_input!(attrs as MeteredKeyValAttribute);
+use aspect_weave::*;
+use std::rc::Rc;
+use synattra::ParseAttributes;
 
-    let metered = attrs.to_metered();
+pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
+    let woven_impl_block = weave_impl_block::<MeteredWeave>(attrs, item)?;
 
-    let mut parsed_input: syn::ItemImpl = parse_macro_input!(item);
-
-    let registry_name = metered.registry;
-    let registry_expr = "self.metrics";
-    let mut measured = indexmap::map::IndexMap::new();
-
-    for item in parsed_input.items.iter_mut() {
-        if let syn::ImplItem::Method(item_fn) = item {
-            let attrs = &mut item_fn.attrs;
-
-            let (ours, theirs): (Vec<syn::Attribute>, Vec<syn::Attribute>) = attrs
-                .clone()
-                .into_iter()
-                .partition(|attr| attr.path.is_ident("measure"));
-
-            item_fn.attrs = theirs;
-
-            let mut measure_reqs: Vec<MeasureRequestAttribute> = Vec::new();
-            for attr in ours.into_iter() {
-                let tts: TokenStream = attr.tts.into();
-                let p = parse_macro_input!(tts as MeasureRequestAttribute);
-                measure_reqs.push(p);
-            }
-
-            if measure_reqs.is_empty() {
-                continue;
-            }
-
-            let block = &item_fn.block;
-            let ident = &item_fn.sig.ident;
-            let qualified_registry_name = format!("{}.{}", registry_expr, &ident);
-
-            let r: proc_macro::TokenStream = measure_list(
-                &qualified_registry_name,
-                &measure_reqs,
-                quote! { #block }.into(),
-            )
-            .into();
-
-            let new_block: syn::Block = syn::parse(r).expect("block");
-            item_fn.block = new_block;
-
-            measured.insert(&item_fn.sig.ident, measure_reqs);
-        }
-    }
+    let impl_block = &woven_impl_block.woven_block;
+    let metered = &woven_impl_block.main_attributes.to_metered();
+    let measured = &woven_impl_block.woven_fns;
+    let registry_name = &metered.registry_name;
+    let registry_ident = &metered.registry_ident;
 
     let mut code = quote! {};
 
@@ -62,7 +22,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     for (fun_name, _) in measured.iter() {
         use heck::CamelCase;
         let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
-        let fun_registry_ident = syn::Ident::new(&fun_reg_name, parsed_input.impl_token.span);
+        let fun_registry_ident = syn::Ident::new(&fun_reg_name, impl_block.impl_token.span);
 
         reg_fields = quote! {
             #reg_fields
@@ -74,7 +34,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
         #code
 
         #[derive(Debug, Default)]
-        struct #registry_name {
+        struct #registry_ident {
             #reg_fields
         }
     };
@@ -84,7 +44,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     for (fun_name, measure_request_attrs) in measured.iter() {
         use heck::CamelCase;
         let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
-        let fun_registry_ident = syn::Ident::new(&fun_reg_name, parsed_input.impl_token.span);
+        let fun_registry_ident = syn::Ident::new(&fun_reg_name, impl_block.impl_token.span);
 
         let mut fun_reg_fields = quote! {};
 
@@ -113,23 +73,56 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     code = quote! {
-        #parsed_input
+        #impl_block
 
         #code
     };
 
     let result: TokenStream = code.into();
-    // println!("Result {}", result.to_string());
-    result
+    println!("Result {}", result.to_string());
+    Ok(result)
 }
 
-fn measure_list<'a>(
-    qualified_registry_name: &'a str,
-    measure_request_attrs: &[MeasureRequestAttribute],
+struct MeteredWeave;
+impl Weave for MeteredWeave {
+    type MacroAttributes = MeteredKeyValAttribute;
+
+    fn update_fn_block(
+        item_fn: &syn::ImplItemMethod,
+        main_attr: &Self::MacroAttributes,
+        fn_attr: &[Rc<<Self as ParseAttributes>::Type>],
+    ) -> syn::Result<syn::Block> {
+        let metered = main_attr.to_metered();
+        let block = &item_fn.block;
+        let ident = &item_fn.sig.ident;
+
+        let r: proc_macro::TokenStream = measure_list(
+            &metered.registry_expr,
+            &ident,
+            fn_attr,
+            quote! { #block }.into(),
+        )
+        .into();
+
+        let new_block: syn::Block = syn::parse(r).expect("block");
+        Ok(new_block)
+    }
+}
+impl ParseAttributes for MeteredWeave {
+    type Type = MeasureRequestAttribute;
+
+    /*const*/
+    fn fn_attr_name() -> &'static str {
+        "measure"
+    }
+}
+
+fn measure_list(
+    registry_expr: &syn::Expr,
+    fun_ident: &syn::Ident,
+    measure_request_attrs: &[Rc<MeasureRequestAttribute>],
     expr: TokenStream,
 ) -> TokenStream {
-    let registry = syn::parse_str::<syn::Expr>(qualified_registry_name).unwrap();
-
     let mut inner: proc_macro2::TokenStream = expr.into();
 
     // Recursive macro invocations
@@ -139,7 +132,7 @@ fn measure_list<'a>(
         for metric in metric_requests.iter() {
             let metric_var = metric.ident();
             inner = quote! {
-                measure! { #metric_var, #inner }
+                metered::measure! { #metric_var, #inner }
             };
         }
     }
@@ -152,7 +145,7 @@ fn measure_list<'a>(
             let metric_var = syn::Ident::new(&metric.field_name, proc_macro2::Span::call_site());
 
             inner = quote! {
-                let #metric_var = &#registry.#metric_var;
+                let #metric_var = &#registry_expr.#fun_ident.#metric_var;
                 #inner
             };
         }

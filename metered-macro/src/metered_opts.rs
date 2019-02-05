@@ -1,11 +1,15 @@
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
-use crate::attrs_common::*;
+use synattra::types::KVOption;
+use synattra::*;
+
+use std::borrow::Cow;
 
 pub struct Metered<'a> {
-    pub registry: &'a syn::Ident,
+    pub registry_ident: &'a syn::Ident,
     pub registry_name: String,
+    pub registry_expr: Cow<'a, syn::Expr>,
 }
 
 pub struct MeteredKeyValAttribute {
@@ -48,7 +52,7 @@ impl MeteredKeyValAttribute {
     }
 
     pub fn to_metered(&self) -> Metered<'_> {
-        let registry = self
+        let registry_ident = self
             .values
             .iter()
             .filter_map(|opt| {
@@ -61,11 +65,26 @@ impl MeteredKeyValAttribute {
             .next()
             .expect("There should be a registry! This error cannot happen if the structure has been validated first!");
 
-        let registry_name = registry.to_string();
+        let registry_name = registry_ident.to_string();
+
+        let registry_expr = self
+            .values
+            .iter()
+            .filter_map(|opt| {
+                if let MeteredOption::RegistryExpr(tpe) = opt {
+                    Some(&tpe.value)
+                } else {
+                    None
+                }
+            })
+            .next()
+            .map(|id| Cow::Borrowed(id))
+            .unwrap_or_else(|| Cow::Owned(syn::parse_str::<syn::Expr>("self.metrics").unwrap()));
 
         Metered {
-            registry,
+            registry_ident,
             registry_name,
+            registry_expr,
         }
     }
 }
@@ -82,29 +101,39 @@ impl Parse for MeteredKeyValAttribute {
     }
 }
 
-custom_keyword!(RegistryKW, registry);
+mod kw {
+    syn::custom_keyword!(registry);
+    syn::custom_keyword!(registry_expr);
+}
 
-pub type MeteredRegistryOption = KVOption<RegistryKW, syn::Ident>;
+pub type MeteredRegistryOption = KVOption<kw::registry, syn::Ident>;
+
+pub type MeteredRegistryExprOption = KVOption<kw::registry_expr, syn::Expr>;
 
 pub enum MeteredOption {
     Registry(MeteredRegistryOption),
-    _Unused,
+    RegistryExpr(MeteredRegistryExprOption),
 }
 
 impl MeteredOption {
     pub fn as_str(&self) -> &str {
+        use syn::token::Token;
         match self {
-            MeteredOption::Registry(opt) => opt.key.as_ref(),
-            MeteredOption::_Unused => "unused",
+            MeteredOption::Registry(_) => <kw::registry>::display(),
+            MeteredOption::RegistryExpr(_) => <kw::registry_expr>::display(),
         }
     }
 }
 
 impl Parse for MeteredOption {
     fn parse(input: ParseStream) -> Result<Self> {
-        input.try_parse_as(MeteredOption::Registry).map_err(|_| {
-            let err = format!("invalid metered option: {}", input.to_string());
-            input.error(err)
-        })
+        if MeteredRegistryOption::peek(input) {
+            Ok(input.parse_as(MeteredOption::Registry)?)
+        } else if MeteredRegistryExprOption::peek(input) {
+            Ok(input.parse_as(MeteredOption::RegistryExpr)?)
+        } else {
+            let err = format!("invalid measure option: {}", input.to_string());
+            Err(input.error(err))
+        }
     }
 }

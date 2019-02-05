@@ -5,6 +5,7 @@ authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 edition = "2018"
 
 [dependencies]
+aspect = { path = "../../aspect-rs/aspect-core", version = "0.1.0"}
 hdrhistogram = "6.1.1"
 metered-macro = { path = "../metered-macro", version = "0.1.0" }
 atomic = "0.4"

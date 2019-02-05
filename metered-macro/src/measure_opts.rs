@@ -1,7 +1,9 @@
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
-use crate::attrs_common::*;
+use synattra::types::extra::InvokePath;
+use synattra::types::{KVOption, MultipleVal};
+use synattra::ParseStreamExt;
 
 pub struct MeasureRequest<'a> {
     pub tpe: &'a syn::TypePath,
@@ -19,24 +21,59 @@ impl<'a> MeasureRequest<'a> {
     }
 }
 
-pub struct MeasureRequestAttribute {
-    pub paren_token: syn::token::Paren,
-    pub inner: MeasureRequestAttributeInner,
+pub enum MeasureRequestAttribute {
+    Empty,
+    NonEmpty(NonEmptyMeasureRequestAttribute),
 }
 
 impl MeasureRequestAttribute {
     pub fn to_requests(&self) -> Vec<MeasureRequest<'_>> {
-        self.inner.to_requests()
+        match self {
+            MeasureRequestAttribute::Empty => Vec::new(),
+            MeasureRequestAttribute::NonEmpty(req) => req.to_requests(),
+        }
     }
 }
 
 impl Parse for MeasureRequestAttribute {
     fn parse(input: ParseStream) -> Result<Self> {
+        if input.is_empty() {
+            Ok(MeasureRequestAttribute::Empty)
+        } else {
+            Ok(MeasureRequestAttribute::NonEmpty(
+                NonEmptyMeasureRequestAttribute::parse(input)?,
+            ))
+        }
+    }
+}
+
+pub struct NonEmptyMeasureRequestAttribute {
+    pub paren_token: syn::token::Paren,
+    pub inner: Option<MeasureRequestAttributeInner>,
+}
+
+impl NonEmptyMeasureRequestAttribute {
+    pub fn to_requests(&self) -> Vec<MeasureRequest<'_>> {
+        if let Some(ref inner) = self.inner {
+            inner.to_requests()
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+impl Parse for NonEmptyMeasureRequestAttribute {
+    fn parse(input: ParseStream) -> Result<Self> {
         let content;
-        let this = MeasureRequestAttribute {
-            paren_token: parenthesized!(content in input),
-            inner: content.parse()?,
+        let paren_token = parenthesized!(content in input);
+
+        let inner = if content.is_empty() {
+            None
+        } else {
+            Some(content.parse()?)
         };
+
+        let this = NonEmptyMeasureRequestAttribute { paren_token, inner };
 
         Ok(this)
     }
@@ -206,11 +243,12 @@ impl Parse for MeasureRequestKeyValAttribute {
     }
 }
 
-token_keyword!(TypeKW, type);
-custom_keyword!(DebugKW, debug);
+mod kw {
+    syn::custom_keyword!(debug);
+}
 
-pub type MeasureTypeOption = KVOption<TypeKW, MultipleVal<syn::TypePath>>;
-pub type MeasureDebugOption = KVOption<DebugKW, InvokePath>;
+pub type MeasureTypeOption = KVOption<syn::Token![type], MultipleVal<syn::TypePath>>;
+pub type MeasureDebugOption = KVOption<kw::debug, InvokePath>;
 
 pub enum MeasureOptions {
     Type(MeasureTypeOption),
@@ -219,21 +257,23 @@ pub enum MeasureOptions {
 
 impl MeasureOptions {
     pub fn as_str(&self) -> &str {
+        use syn::token::Token;
         match self {
-            MeasureOptions::Type(opt) => opt.key.as_ref(),
-            MeasureOptions::Debug(opt) => opt.key.as_ref(),
+            MeasureOptions::Type(_) => <syn::Token![type]>::display(),
+            MeasureOptions::Debug(_) => <kw::debug>::display(),
         }
     }
 }
 
 impl Parse for MeasureOptions {
     fn parse(input: ParseStream) -> Result<Self> {
-        input
-            .try_parse_as(MeasureOptions::Type)
-            .or_else(|_| input.try_parse_as(MeasureOptions::Debug))
-            .map_err(|_| {
-                let err = format!("invalid measure option: {}", input.to_string());
-                input.error(err)
-            })
+        if MeasureTypeOption::peek(input) {
+            Ok(input.parse_as(MeasureOptions::Type)?)
+        } else if MeasureDebugOption::peek(input) {
+            Ok(input.parse_as(MeasureOptions::Debug)?)
+        } else {
+            let err = format!("invalid measure option: {}", input.to_string());
+            Err(input.error(err))
+        }
     }
 }
