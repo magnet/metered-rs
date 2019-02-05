@@ -1,3 +1,4 @@
+pub mod atomic;
 pub mod common;
 pub mod hdr_histogram;
 pub mod int_counter;

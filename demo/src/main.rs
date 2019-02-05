@@ -4,7 +4,7 @@ use metered::*;
 mod metered_impl;
 use metered_impl::Baz;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, serde::Serialize)]
 struct TestMetrics {
     hit_count: HitCount,
     error_count: ErrorCount,
@@ -25,38 +25,42 @@ fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
     })
 }
 
+fn sync_procmacro_demo(baz: &Baz) {
+    for i in 1..=10 {
+        baz.foo();
+        let _ = baz.bar(i % 3 == 0);
+    }
+}
 
+async fn async_procmacro_demo(baz: Baz) {
 
-async fn async_demo() {
-    let baz = Baz::default();
-   
     for i in 1..=5 {
-        // let _ = await!(baz.baz(i % 3 == 0));
         let _ = await!(baz.baz(i % 3 == 0));
+    }
 
-    } 
-    println!("baz: {:#?}", baz);
+    // Print the results!
+    let serialized = serde_yaml::to_string(&baz).unwrap();
+    println!("{}", serialized);
+}
 
+fn simple_api_demo() {
+    let metrics = TestMetrics::default();
+
+    let _ = test(false, &metrics);
+    let _ = test(true, &metrics);
+    // Print the results!
+    let serialized = serde_yaml::to_string(&metrics).unwrap();
+    println!("{}", serialized);
 }
 
 
 
 fn main() {
-    let metrics = TestMetrics::default();
+    simple_api_demo();
 
-    let _ = test(false, &metrics);
-    let _ = test(true, &metrics);
-
-    println!("c {:#?}", metrics);
     let baz = Baz::default();
 
-    for i in 1..=30 {
-        baz.foo();
-        let _ = baz.bar(i % 3 == 0);
-    }
+    sync_procmacro_demo(&baz);
 
-    println!("baz: {:#?}", baz);
-
-
-    tokio::run_async(async_demo());
+    tokio::run_async(async_procmacro_demo(baz));
 }

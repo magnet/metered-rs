@@ -1,7 +1,6 @@
+use crate::atomic::AtomicInt;
 use crate::metric::Gauge;
-use atomic::Atomic;
 use std::cell::Cell;
-use std::sync::atomic::Ordering;
 
 macro_rules! impl_gauge_for {
     ($int:path) => {
@@ -15,13 +14,13 @@ macro_rules! impl_gauge_for {
             }
         }
 
-        impl Gauge for Atomic<$int> {
+        impl Gauge for AtomicInt<$int> {
             fn incr(&self) {
-                self.fetch_add(1, Ordering::Relaxed);
+                AtomicInt::<$int>::incr(&self);
             }
 
             fn decr(&self) {
-                self.fetch_sub(1, Ordering::Relaxed);
+                AtomicInt::<$int>::decr(&self);
             }
         }
     };
@@ -32,4 +31,3 @@ impl_gauge_for!(u16);
 impl_gauge_for!(u32);
 impl_gauge_for!(u64);
 impl_gauge_for!(u128);
-impl_gauge_for!(usize);

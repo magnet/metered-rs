@@ -1,9 +1,10 @@
+use crate::atomic::AtomicInt;
 use crate::metric::{Counter, Metric};
 use aspect::{Advice, Enter, OnResult};
-use atomic::Atomic;
+use serde::Serialize;
 
-#[derive(Clone, Default, Debug)]
-pub struct ErrorCount<C: Counter = Atomic<u64>>(C);
+#[derive(Clone, Default, Debug, Serialize)]
+pub struct ErrorCount<C: Counter = AtomicInt<u64>>(C);
 
 impl<C: Counter> Enter for ErrorCount<C> {
     type E = ();

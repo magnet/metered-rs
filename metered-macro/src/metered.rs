@@ -33,7 +33,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     code = quote! {
         #code
 
-        #[derive(Debug, Default)]
+        #[derive(Debug, Default, serde::Serialize)]
         struct #registry_ident {
             #reg_fields
         }
@@ -65,7 +65,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         code = quote! {
             #code
 
-            #[derive(Debug, Default)]
+            #[derive(Debug, Default, serde::Serialize)]
             struct #fun_registry_ident {
                 #fun_reg_fields
             }

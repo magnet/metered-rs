@@ -1,4 +1,5 @@
 use crate::metric::Histogram;
+use serde::{Serialize, Serializer};
 
 use atomic_refcell::AtomicRefCell;
 
@@ -10,6 +11,18 @@ pub struct AtomicHdrHistogram {
 impl Histogram for AtomicHdrHistogram {
     fn record(&self, value: u64) {
         self.inner.borrow_mut().record(value);
+    }
+}
+
+impl Serialize for AtomicHdrHistogram {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use std::ops::Deref;
+        let inner = self.inner.borrow();
+        let rf = inner.deref();
+        Serialize::serialize(rf, serializer)
     }
 }
 
@@ -31,6 +44,31 @@ impl HdrHistogram {
         // All recordings will be saturating, that is, a value higher than 5 minutes
         // will be replace by 5 minutes...
         self.histo.saturating_record(value);
+    }
+}
+
+impl Serialize for HdrHistogram {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let hdr = &self.histo;
+        let ile = |v| hdr.value_at_percentile(v);
+        use serde::ser::SerializeMap;
+
+        let mut tup = serializer.serialize_map(Some(10))?;
+
+        tup.serialize_entry("samples", &hdr.len())?;
+        tup.serialize_entry("min", &hdr.min())?;
+        tup.serialize_entry("max", &hdr.max())?;
+        tup.serialize_entry("mean", &hdr.mean())?;
+        tup.serialize_entry("stdev", &hdr.stdev())?;
+        tup.serialize_entry("90%ile", &ile(90.0))?;
+        tup.serialize_entry("95%ile", &ile(95.0))?;
+        tup.serialize_entry("99%ile", &ile(99.0))?;
+        tup.serialize_entry("99.9ile", &ile(99.9))?;
+        tup.serialize_entry("99.99ile", &ile(99.99))?;
+        tup.end()
     }
 }
 

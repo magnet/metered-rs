@@ -1,16 +1,15 @@
 #![allow(dead_code)]
 
-use metered::{metered, HitCount, ErrorCount, ResponseTime, InFlight};
+use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, serde::Serialize)]
 pub struct Baz {
-    baz_metrics: BazMetricRegistry,
+    metric_reg: BazMetricRegistry,
 }
 
-#[metered(registry = BazMetricRegistry, /* default = self.metrics */ registry_expr = self.baz_metrics)]
+#[metered(registry = BazMetricRegistry, /* default = self.metrics */ registry_expr = self.metric_reg)]
 #[measure(InFlight)] // Applies to all methods that have the `measure` attribute
 impl Baz {
-
     // This is measured with an InFlight gauge, because it's the default on the block.
     #[measure]
     pub fn bir(&self) {
@@ -18,7 +17,6 @@ impl Baz {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
         std::thread::sleep(delay);
     }
-
 
     // This is not measured
     pub fn bor(&self) {
@@ -32,7 +30,7 @@ impl Baz {
         std::thread::sleep(delay);
     }
 
-    #[measure(type = HitCount<atomic::Atomic<u128>>)]
+    #[measure(type = HitCount<metered::atomic::AtomicInt<u128>>)]
     #[measure(ErrorCount)]
     #[measure(ResponseTime)]
     pub fn bar(&self, should_fail: bool) -> Result<(), &'static str> {
@@ -44,7 +42,7 @@ impl Baz {
         }
     }
     #[measure([ErrorCount, ResponseTime])]
-    pub async fn baz(&self, should_fail: bool)  -> Result<(), &'static str> {
+    pub async fn baz(&self, should_fail: bool) -> Result<(), &'static str> {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 
         let when = std::time::Instant::now() + delay;
@@ -56,7 +54,6 @@ impl Baz {
             Err("I failed!")
         }
     }
-
 
     // This is not measured either
     pub fn bur() {

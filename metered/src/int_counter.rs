@@ -1,7 +1,6 @@
+use crate::atomic::AtomicInt;
 use crate::metric::Counter;
-use atomic::Atomic;
 use std::cell::Cell;
-use std::sync::atomic::Ordering;
 
 macro_rules! impl_counter_for {
     ($int:path) => {
@@ -11,9 +10,9 @@ macro_rules! impl_counter_for {
             }
         }
 
-        impl Counter for Atomic<$int> {
+        impl Counter for AtomicInt<$int> {
             fn incr(&self) {
-                self.fetch_add(1, Ordering::Relaxed);
+                AtomicInt::<$int>::incr(&self);
             }
         }
     };
@@ -24,4 +23,3 @@ impl_counter_for!(u16);
 impl_counter_for!(u32);
 impl_counter_for!(u64);
 impl_counter_for!(u128);
-impl_counter_for!(usize);

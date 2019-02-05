@@ -1,9 +1,12 @@
+use crate::atomic::AtomicInt;
 use crate::metric::{Gauge, Metric};
 use aspect::{Advice, Enter, OnResult};
-use atomic::Atomic;
+use serde::Serialize;
 
-#[derive(Clone, Default, Debug)]
-pub struct InFlight<G: Gauge = Atomic<u64>>(G);
+#[derive(Clone, Default, Debug, Serialize)]
+pub struct InFlight<G: Gauge = AtomicInt<u64>>(G);
+
+impl<G: Gauge, R: Serialize> Metric<R> for InFlight<G> {}
 
 impl<G: Gauge> Enter for InFlight<G> {
     type E = ();
@@ -18,4 +21,3 @@ impl<G: Gauge, R> OnResult<R> for InFlight<G> {
         Advice::Return
     }
 }
-impl<G: Gauge, R> Metric<R> for InFlight<G> {}
