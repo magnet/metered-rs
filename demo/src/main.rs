@@ -30,12 +30,12 @@ fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
 async fn async_demo() {
     let baz = Baz::default();
    
-    for i in 1..=30 {
+    for i in 1..=5 {
         // let _ = await!(baz.baz(i % 3 == 0));
         let _ = await!(baz.baz(i % 3 == 0));
 
     } 
-    println!("baz: {:?}", baz);
+    println!("baz: {:#?}", baz);
 
 }
 
@@ -47,7 +47,7 @@ fn main() {
     let _ = test(false, &metrics);
     let _ = test(true, &metrics);
 
-    println!("c {:?}", metrics);
+    println!("c {:#?}", metrics);
     let baz = Baz::default();
 
     for i in 1..=30 {
@@ -55,7 +55,7 @@ fn main() {
         let _ = baz.bar(i % 3 == 0);
     }
 
-    println!("baz: {:?}", baz);
+    println!("baz: {:#?}", baz);
 
 
     tokio::run_async(async_demo());
