@@ -1,16 +1,28 @@
+use crate::clear::Clear;
 use crate::metric::Histogram;
+use atomic_refcell::AtomicRefCell;
 use serde::{Serialize, Serializer};
 
-use atomic_refcell::AtomicRefCell;
-
-#[derive(Default)]
 pub struct AtomicHdrHistogram {
     inner: AtomicRefCell<HdrHistogram>,
 }
 
+
 impl Histogram for AtomicHdrHistogram {
+    fn with_bound(max_bound: u64) -> Self {
+        let histo = HdrHistogram::with_bound(max_bound);
+        let inner = AtomicRefCell::new(histo);
+        AtomicHdrHistogram { inner }
+    }
+
     fn record(&self, value: u64) {
         self.inner.borrow_mut().record(value);
+    }
+}
+
+impl Clear for AtomicHdrHistogram {
+    fn clear(&self) {
+        self.inner.borrow_mut().clear();
     }
 }
 
@@ -21,8 +33,8 @@ impl Serialize for AtomicHdrHistogram {
     {
         use std::ops::Deref;
         let inner = self.inner.borrow();
-        let rf = inner.deref();
-        Serialize::serialize(rf, serializer)
+        let inner = inner.deref();
+        Serialize::serialize(inner, serializer)
     }
 }
 
@@ -40,10 +52,21 @@ pub struct HdrHistogram {
 }
 
 impl HdrHistogram {
-    fn record(&mut self, value: u64) {
+    pub fn with_bound(max_bound: u64) -> Self {
+        let histo = hdrhistogram::Histogram::<u64>::new_with_bounds(1, max_bound, 2)
+            .expect("Could not instantiate HdrHistogram");
+
+        HdrHistogram { histo }
+    }
+
+    pub fn record(&mut self, value: u64) {
         // All recordings will be saturating, that is, a value higher than 5 minutes
         // will be replace by 5 minutes...
         self.histo.saturating_record(value);
+    }
+
+    pub fn clear(&mut self) {
+        self.histo.reset();
     }
 }
 
@@ -92,17 +115,5 @@ impl Debug for HdrHistogram {
             ile(99.9),
             ile(99.99)
         )
-    }
-}
-
-impl Default for HdrHistogram {
-    fn default() -> Self {
-        // A HdrHistogram measuring latencies from 1ms to 5minutes
-        // All recordings will be saturating, that is, a value higher than 5 minutes
-        // will be replace by 5 minutes...
-        let histo = hdrhistogram::Histogram::<u64>::new_with_bounds(1, 5 * 60 * 1000, 2)
-            .expect("Could not instantiate HdrHistogram");
-
-        HdrHistogram { histo }
     }
 }

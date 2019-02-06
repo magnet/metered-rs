@@ -1,8 +1,11 @@
 #![feature(await_macro, async_await, futures_api)]
 
 use metered::*;
-mod metered_impl;
-use metered_impl::Baz;
+mod baz;
+use baz::Baz;
+mod biz;
+use biz::Biz;
+
 
 #[derive(Default, Debug, serde::Serialize)]
 struct TestMetrics {
@@ -53,10 +56,41 @@ fn simple_api_demo() {
     println!("{}", serialized);
 }
 
+fn test_biz() {
+    use std::thread;
+    use std::sync::Arc;
+    use std::ops::Deref;
 
+    let biz = Arc::new(Biz::default());
+
+    let mut threads = Vec::new();
+    for _ in 0..5 {
+        let biz = Arc::clone(&biz);
+        let t = thread::spawn(move || {
+            for _ in 0..20 {
+                biz.biz();
+            }
+        });
+        threads.push(t);
+    }
+
+
+    for t in threads {
+        let _ = t.join().unwrap();
+    }
+
+
+    // Print the results!
+    let serialized = serde_yaml::to_string(biz.deref()).unwrap();
+    println!("{}", serialized);
+
+
+}
 
 fn main() {
     simple_api_demo();
+
+    test_biz();
 
     let baz = Baz::default();
 

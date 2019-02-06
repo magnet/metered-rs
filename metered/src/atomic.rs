@@ -31,6 +31,10 @@ macro_rules! impl_blocks_for {
             pub fn decr(&self) -> $int {
                 self.inner.fetch_sub(1, Ordering::Relaxed)
             }
+
+            pub fn set(&self, v: $int) {
+                self.inner.store(v, Ordering::Relaxed);
+            }
         }
 
         impl Serialize for AtomicInt<$int> {

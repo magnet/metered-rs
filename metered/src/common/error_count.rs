@@ -1,10 +1,13 @@
 use crate::atomic::AtomicInt;
+use crate::clear::Clear;
 use crate::metric::{Counter, Metric};
 use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
 
 #[derive(Clone, Default, Debug, Serialize)]
 pub struct ErrorCount<C: Counter = AtomicInt<u64>>(C);
+
+impl<C: Counter, T, E> Metric<Result<T, E>> for ErrorCount<C> {}
 
 impl<C: Counter> Enter for ErrorCount<C> {
     type E = ();
@@ -19,4 +22,9 @@ impl<C: Counter, T, E> OnResult<Result<T, E>> for ErrorCount<C> {
         Advice::Return
     }
 }
-impl<C: Counter, T, E> Metric<Result<T, E>> for ErrorCount<C> {}
+
+impl<C: Counter> Clear for ErrorCount<C> {
+    fn clear(&self) {
+        self.0.clear()
+    }
+}

@@ -1,4 +1,5 @@
 use crate::atomic::AtomicInt;
+use crate::clear::Clear;
 use crate::metric::Counter;
 use std::cell::Cell;
 
@@ -10,9 +11,21 @@ macro_rules! impl_counter_for {
             }
         }
 
+        impl Clear for Cell<$int> {
+            fn clear(&self) {
+                self.set(0);
+            }
+        }
+
         impl Counter for AtomicInt<$int> {
             fn incr(&self) {
                 AtomicInt::<$int>::incr(&self);
+            }
+        }
+
+        impl Clear for AtomicInt<$int> {
+            fn clear(&self) {
+                AtomicInt::<$int>::set(&self, 0);
             }
         }
     };

@@ -1,4 +1,5 @@
 use crate::atomic::AtomicInt;
+use crate::clear::Clear;
 use crate::metric::{Counter, Metric};
 use aspect::{Enter, OnResult};
 use serde::Serialize;
@@ -16,3 +17,9 @@ impl<C: Counter> Enter for HitCount<C> {
 }
 
 impl<C: Counter, R> OnResult<R> for HitCount<C> {}
+
+impl<C: Counter> Clear for HitCount<C> {
+    fn clear(&self) {
+        self.0.clear()
+    }
+}

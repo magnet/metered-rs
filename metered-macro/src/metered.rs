@@ -79,7 +79,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     };
 
     let result: TokenStream = code.into();
-    println!("Result {}", result.to_string());
+    // println!("Result {}", result.to_string());
     Ok(result)
 }
 
