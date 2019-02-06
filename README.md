@@ -2,23 +2,31 @@
 ## Fast, ergonomic metrics for Rust!
 
 Metered helps you measure the performance of your programs in production. Inspired by Coda Hale's Java metrics library, Metered makes live measurements easy by providing measurement declarative and procedural macros, and a variety of useful metrics ready out-of-the-box:
-* `HitCount`: a counter tracking how much a method was hit.
-* `ErrorCount`: a counter tracking how many errors were returned -- (works on any method returning a std `Result`)
-* `InFlight`: a gauge tracking how many requests are active for a method
-* `ResponseTime`: statistics backed by an HdrHistogram of the duration of a method call
-* `Throughput`: statistics backed by an HdrHistogram of how many times a method is called per second.
+* `HitCount`: a counter tracking how much a piece of code was hit.
+* `ErrorCount`: a counter tracking how many errors were returned -- (works on any expression returning a std `Result`)
+* `InFlight`: a gauge tracking how many requests are active 
+* `ResponseTime`: statistics backed by an HdrHistogram of the duration of an expression
+* `Throughput`: statistics backed by an HdrHistogram of how many times an expression is called per second.
 
-For better performance, these stock metrics can be customized to use a non-thread safe (`!Sync`/`!Send`) datastructure. For ergonomy reasons, stock metrics default to thread-safe datastructures, implemented using lock-free strategies where possible.
+These metrics are usually applied to methods, with provided procedural macros that generate the boilerplate for us.
+
+For better performance, these stock metrics can be customized to use non-thread safe (`!Sync`/`!Send`) datastructures. For ergonomy reasons, stock metrics default to thread-safe datastructures, implemented using lock-free strategies where possible.
 
 Metered is designed as a zero-overhead abstraction -- in the sense that the higher-level ergonomics should not cost over manually adding metrics. Stock metrics will *not* allocate memory after they're initialized the first time.  However, they are triggered at every method call and it can be interesting to use lighter metrics (e.g `HitCount`) in very hot code paths and favour heavier metrics (`Throughput`, `ResponseTime`) in entry points.
 
-If a metric you need is missing, or if you want to customize a metric (for instance, to track how many times a specific error happens, or react depending on your return type), it is possible to implement your own metrics simply by implementing the trait `metered::metric::Metric`.
+If a metric you need is missing, or if you want to customize a metric (for instance, to track how many times a specific error occurs, or react depending on your return type), it is possible to implement your own metrics simply by implementing the trait `metered::metric::Metric`.
 
 Metered does not use statics or shared global state. Instead, it lets you either build your own metric registry using the metrics you need, or can generate a metric registry for you using method attributes. Metered will generate one registry per `impl` block annotated with the `metered` attribute, under the name provided as the `registry` parameter. By default, Metered will expect the registry to be accessed as `self.metrics` but the expression can be overridden with the `registry_expr` attribute parameter. See the demo for more examples.
 
-Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Adapters for metric storage and monitoring systems are planned (contributions welcome!). Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access to metrics is always constant,without any overhead other than the metric itself.
+Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Adapters for metric storage and monitoring systems are planned (contributions welcome!). Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
 
 Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, `ResponseTime` will return the completion time across `await!` invocations).
+
+## Required Rust version
+
+Metered works on `Rust` stable and does not use any nightly features. There may be a `nightly` feature flag at some point to use upcoming Rust features (such as `const fn`s), and similar features from crates Metered depends on, but this is low priority (patches welcome).
+
+Metered has been only tested on Edition 2018 code.
 
 ## Example using procedural macros (recommended)
 
@@ -44,7 +52,7 @@ In the snippet above, we will measure the `HitCount` and `Throughput` of the `bi
 
 This works by first annotating the `impl` block with the `metered` annotation and specifying the name Metered should give to the metric registry (here `BizMetrics`). Later, Metered will assume the expression to access that repository is `self.metrics`, hence we need a `metrics` field with the `BizMetrics` type in `Biz`. It would be possible to use another field name by specificying another registry expression, such as `#[metered(registry = BizMetrics, registry_expr = self.my_custom_metrics)]`.
 
-Then, we must annotate which methods we wish to measure using the `measure` attribute, and specifying the metrics we wish to apply: the metrics here are simply types of structures implementing the `Metric` trait, and you can define your own. Since there is no magic, we must ensure `self.metrics` can be accessed, and this will only work on methods with a `&self` or `&mut self` receiver.
+Then, we must annotate which methods we wish to measure using the `measure` attribute, specifying the metrics we wish to apply: the metrics here are simply types of structures implementing the `Metric` trait, and you can define your own. Since there is no magic, we must ensure `self.metrics` can be accessed, and this will only work on methods with a `&self` or `&mut self` receiver.
 
 Let's look at `biz`'s code a second: it's a blocking method that returns after between 0 and 200ms, using `rand::random`. Since `random` has a random distribution, we can expect the mean sleep time to be around 100ms. That would mean around 10 calls per second per thread.
 
@@ -107,25 +115,34 @@ The Hdr Histogram backing these statistics is able to give much more than fixed 
 ### The `metered` attribute
 
 `#[metered(registry = YourRegistryName, registry_expr = self.wrapper.my_registry)]` 
+
 `registry` is mandatory and must be a valid Rust ident.
+
 `registry_expr` defaults to `this.metrics`, alternate values must be a valid Rust expression.
 
 ### The `measure` attribute
 
 Single metric:
+
 `#[measure(path::to::MyMetric<u64>)]`
+
 or: 
+
 `#[measure(type = path::to::MyMetric<u64>)]`
 
 Multiple metrics:
+
 `#[measure([path::to::MyMetric<u64>, path::AnotherMetric])]`
+
 or
+
 `#[measure(type = [path::to::MyMetric<u64>, path::AnotherMetric])]`
 
 The `type` keyword is allowed because other keywords are planned for future extra attributes (e.g, instantation options).
 
 When `measure` attribute is applied to an `impl` block, it applies for every method that has a `measure` attribute. If a method does not need extra measure infos, it is possible to annotate it with simply `#[measure]` and the `impl` block's `measure` configuration will be applied.
 
+The `measure` keyword can be added several times on an `impl` block or method, which will add to the list of metrics applied. Adding the same metric several time will lead in a name clash.
 
 ### Design
 
