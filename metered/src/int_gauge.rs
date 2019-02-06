@@ -1,3 +1,5 @@
+//! A module providing thread-safe and unsynchronized implementations for Gauges on various unsized integers.
+
 use crate::atomic::AtomicInt;
 use crate::metric::Gauge;
 use std::cell::Cell;

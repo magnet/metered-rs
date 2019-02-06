@@ -1,3 +1,7 @@
+//! Procedural macros for Metered, a metric library for Rust.
+//! 
+//! Please check the Metered crate for documentation.
+
 // The `quote!` macro requires deep recursion.
 #![recursion_limit = "512"]
 

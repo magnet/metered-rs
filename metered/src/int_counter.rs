@@ -1,3 +1,5 @@
+//! A module providing thread-safe and unsynchronized implementations for Counters on various unsized integers.
+
 use crate::atomic::AtomicInt;
 use crate::clear::Clear;
 use crate::metric::Counter;

@@ -1,3 +1,5 @@
+//! A module providing thread-safe and unsynchronized implementations for Histograms, based on HdrHistogram.
+
 use crate::clear::Clear;
 use crate::metric::Histogram;
 use atomic_refcell::AtomicRefCell;
@@ -6,7 +8,6 @@ use serde::{Serialize, Serializer};
 pub struct AtomicHdrHistogram {
     inner: AtomicRefCell<HdrHistogram>,
 }
-
 
 impl Histogram for AtomicHdrHistogram {
     fn with_bound(max_bound: u64) -> Self {

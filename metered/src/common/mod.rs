@@ -1,3 +1,5 @@
+//! A module providing common metrics.
+
 mod error_count;
 mod hit_count;
 mod in_flight;

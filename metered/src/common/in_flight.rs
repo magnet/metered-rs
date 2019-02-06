@@ -1,8 +1,20 @@
+//! A module providing the `InFlight` metric.
+
 use crate::atomic::AtomicInt;
 use crate::clear::Clear;
 use crate::metric::{Gauge, Metric};
 use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
+
+/// A metric providing an in-flight gauge, showing how many calls are currently active for an expression.
+///
+/// This is a light-weight metric.
+///
+/// This makes sense mostly in a multi-threaded situation where several threads may call the same method constantly, and we want to monitor how many are active at a given time.
+///
+/// The [`Throughput`](struct.Throughput.html) metric shows an alternative view of the same picture, by reporting how many transactions per seconds are processed by an expression.
+///
+/// By default, `InFlight` uses a lock-free `u64` `Gauge`, which makes sense in multithread scenarios. Non-threaded applications can gain performance by using a `std::cell:Cell<u64>` instead.
 
 #[derive(Clone, Default, Debug, Serialize)]
 pub struct InFlight<G: Gauge = AtomicInt<u64>>(G);

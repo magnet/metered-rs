@@ -146,9 +146,9 @@ The `measure` keyword can be added several times on an `impl` block or method, w
 
 ### Design
 
-Do you like Metered's custom attribute parsing, which lets you use reserved keywords and arbitrary Rust syntax? The code has been extracted to the Synattra crate, which provides useful methods on top of the Syn parser for Attribute parsing!
+Do you like Metered's custom attribute parsing, which lets you use reserved keywords and arbitrary Rust syntax? The code has been extracted to the [Synattra](https://github.com/magnet/synattra) project, which provides useful methods on top of the Syn parser for Attribute parsing!
 
-Do you want to build a project that wraps method calls the same way Metrics does, regardless of whether they're `async` blocks or not? That code has been extracted to the Aspect-rs project!
+Do you want to build a project that wraps method calls the same way Metrics does, regardless of whether they're `async` blocks or not? That code has been extracted to the [Aspect-rs](https://github.com/magnet/aspect-rs) project!
 
 
 ## License

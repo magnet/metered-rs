@@ -63,7 +63,6 @@ impl<T: Instant> Serialize for TxPerSec<T> {
     }
 }
 
-
 use std::fmt;
 use std::fmt::Debug;
 impl<T: Instant> Debug for TxPerSec<T> {

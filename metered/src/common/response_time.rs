@@ -1,3 +1,5 @@
+//! A module providing the `ResponseTime` metric.
+
 use crate::clear::Clear;
 use crate::hdr_histogram::AtomicHdrHistogram;
 use crate::metric::{Histogram, Metric};
@@ -5,6 +7,11 @@ use crate::time_source::{Instant, StdInstant};
 use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
 
+/// A metric measuring the response time of an expression, that is the duration the expression needed to complete.
+///
+/// Because it retrieves the current time before calling the expression, computes the elapsed duration and registers it to an histogram, this is a rather heavy-weight metric better applied at entry-points.
+///
+/// By default, `ResponseTime` uses an atomic hdr histogram and a synchronized time source, which work better in multithread scenarios. Non-threaded applications can gain performance by using unsynchronized structures instead.
 #[derive(Clone, Debug, Serialize)]
 pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInstant>(
     H,

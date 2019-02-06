@@ -1,4 +1,5 @@
-//! A new-type Atomic wrapper that implements Debug & Serialize as we want.
+//! A module providing new-type Atomic wrapper that implements Debug & Serialize.
+
 use serde::{Serialize, Serializer};
 use std::fmt;
 use std::fmt::{Debug, Display};
