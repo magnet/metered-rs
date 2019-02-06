@@ -14,17 +14,13 @@ edition = "2018"
 
 [dependencies]
 syn = {version= "0.15.26", features = ["full"] }
-synattra = { path ="../../synattra", version = "0.1.0"}
-aspect-weave = { path ="../../aspect-rs/aspect-weave", version = "0.1.0"}
+synattra = "0.1.0"
+aspect-weave =  "0.1.0"
 quote = "0.6.11"
 proc-macro2 = "0.4.26"
 heck = "0.3.1"
 indexmap = "1.0.2"
 
-[dev-dependencies]
-metered = { path = "../metered", version = "0.1.0"}
-rand = "0.6.5"
-serde = { version = "1.0", features = ["derive"] }
 
 
 [lib]

@@ -22,7 +22,7 @@ use proc_macro::TokenStream;
 
 /// A procedural macro that generates a metric registry for an `impl` block.
 /// 
-/// ```
+/// ``` ignore
 /// # extern crate metered;
 /// # extern crate rand;
 /// 
