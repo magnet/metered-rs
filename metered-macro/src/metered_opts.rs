@@ -1,3 +1,5 @@
+//! The module supporting #[metered] options
+
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
@@ -132,7 +134,7 @@ impl Parse for MeteredOption {
         } else if MeteredRegistryExprOption::peek(input) {
             Ok(input.parse_as(MeteredOption::RegistryExpr)?)
         } else {
-            let err = format!("invalid measure option: {}", input.to_string());
+            let err = format!("invalid metered option: {}", input);
             Err(input.error(err))
         }
     }

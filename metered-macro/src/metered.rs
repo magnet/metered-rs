@@ -1,3 +1,5 @@
+//! The module supporting #[metered]
+
 use proc_macro::TokenStream;
 
 use crate::measure_opts::MeasureRequestAttribute;

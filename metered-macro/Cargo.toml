@@ -2,6 +2,14 @@
 name = "metered-macro"
 version = "0.1.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+readme = "../README.md"
+keywords = ["metrics", "macro"]
+repository = "https://github.com/magnet/metered-rs"
+description = """
+Fast, ergonomic metrics for Rust!
+"""
+categories = ["rust-patterns",  "development-tools::profiling", "data-structures", "config", "algorithms", "asynchronous"]
 edition = "2018"
 
 [dependencies]
@@ -12,6 +20,11 @@ quote = "0.6.11"
 proc-macro2 = "0.4.26"
 heck = "0.3.1"
 indexmap = "1.0.2"
+
+[dev-dependencies]
+metered = { path = "../metered", version = "0.1.0"}
+rand = "0.6.5"
+serde = { version = "1.0", features = ["derive"] }
 
 
 [lib]

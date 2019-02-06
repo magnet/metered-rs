@@ -5,12 +5,17 @@ use std::fmt;
 use std::fmt::{Debug, Display};
 use std::sync::atomic::Ordering;
 
+/// A new-type wrapper over `atomic::Atomic` that supports serde serialization and a cleaner debug output.
+///
+/// All default operations on the wrapper type are using a relaxed memory ordering, which makes it suitable for counters and little else.
 #[derive(Default)]
 pub struct AtomicInt<T: Copy> {
+    /// The inner atomic instance
     pub inner: atomic::Atomic<T>,
 }
 
 impl<T: Copy> AtomicInt<T> {
+    /// Returns the current value with a relaxed
     pub fn get(&self) -> T {
         self.inner.load(Ordering::Relaxed)
     }
@@ -25,14 +30,17 @@ impl<T: Copy + Display> Debug for AtomicInt<T> {
 macro_rules! impl_blocks_for {
     ($int:path: $method_name:ident) => {
         impl AtomicInt<$int> {
+            /// Increments self
             pub fn incr(&self) -> $int {
                 self.inner.fetch_add(1, Ordering::Relaxed)
             }
 
+            /// Decrements self
             pub fn decr(&self) -> $int {
                 self.inner.fetch_sub(1, Ordering::Relaxed)
             }
 
+            /// Sets self to a new value
             pub fn set(&self, v: $int) {
                 self.inner.store(v, Ordering::Relaxed);
             }

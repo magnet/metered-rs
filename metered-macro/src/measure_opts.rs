@@ -1,3 +1,5 @@
+//! The module supporting #[measure] options
+
 use syn::parse::{Parse, ParseStream};
 use syn::Result;
 
