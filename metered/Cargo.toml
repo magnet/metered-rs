@@ -13,9 +13,9 @@ categories = ["rust-patterns", "development-tools::profiling", "data-structures"
 edition = "2018"
 
 [dependencies]
-aspect = { path = "../../aspect-rs/aspect-core", version = "0.1.0"}
+aspect = "0.1.0"
 hdrhistogram = "6.1.1"
-metered-macro = { path = "../metered-macro", version = "0.1.0" }
+metered-macro = "0.1.0"
 atomic = "0.4"
 atomic_refcell = "0.1.3"
 serde = { version = "1.0", features = ["derive"] }
