@@ -1,4 +1,5 @@
 # metered-rs
+[![Build Status](https://travis-ci.org/magnet/metered-rs.svg?branch=master)](https://travis-ci.org/magnet/metered-rs)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
 https://github.com/magnet/metered-rs)
 [![Cargo](https://img.shields.io/crates/v/metered.svg)](
@@ -35,9 +36,9 @@ Right now, Metered does not provide bridges to external metric storage or monito
 
 ## Required Rust version
 
-Metered works on `Rust` stable and does not use any nightly features. There may be a `nightly` feature flag at some point to use upcoming Rust features (such as `const fn`s), and similar features from crates Metered depends on, but this is low priority (patches welcome).
+Metered works on `Rust` stable, starting 1.31.0.
 
-Metered has been only tested on Edition 2018 code.
+It does not use any nightly features. There may be a `nightly` feature flag at some point to use upcoming Rust features (such as `const fn`s), and similar features from crates Metered depends on, but this is low priority (contributions welcome).
 
 ## Example using procedural macros (recommended)
 
