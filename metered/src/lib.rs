@@ -20,7 +20,7 @@
 //! Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
 //!
 //! Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, [`ResponseTime`](common/struct.ResponseTime.html) will return the completion time across `await!` invocations).
-//! 
+//!
 //! Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
 //!
 //! ## Example using procedural macros (recommended)
@@ -99,7 +99,7 @@ pub use common::{ErrorCount, HitCount, InFlight, ResponseTime, Throughput};
 pub use metered_macro::metered;
 
 /// Re-export this type so 3rd-party crates don't need to depend on the `aspect-rs` crate.
-pub use aspect::{Advice, Enter};
+pub use aspect::Enter;
 
 /// The `measure!` macro takes a reference to a metric and an expression.
 ///
@@ -107,15 +107,10 @@ pub use aspect::{Advice, Enter};
 #[macro_export]
 macro_rules! measure {
     ($metric:ident, $e:expr) => {{
-        loop {
-            let _metric = $metric;
-            let _enter = $crate::Enter::enter(_metric);
-            let _result = $e;
-            let _advice = $crate::metric::on_result(_metric, _enter, &_result);
-            match _advice {
-                $crate::Advice::Return => break _result,
-                _ => continue,
-            }
-        }
+        let _metric = $metric;
+        let _enter = $crate::Enter::enter(_metric);
+        let _result = $e;
+        $crate::metric::on_result(_metric, _enter, &_result);
+        _result
     }};
 }
