@@ -20,7 +20,7 @@ Metered is built with the following principles in mind:
 
  * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.1.2/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
- Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default.
+ Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
 
 
 ## Using Metered
