@@ -130,7 +130,7 @@ The Hdr Histogram backing these statistics is able to give much more than fixed 
 
 `registry` is mandatory and must be a valid Rust ident.
 
-`registry_expr` defaults to `this.metrics`, alternate values must be a valid Rust expression.
+`registry_expr` defaults to `self.metrics`, alternate values must be a valid Rust expression.
 
 ### The `measure` attribute
 
