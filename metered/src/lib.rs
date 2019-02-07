@@ -26,7 +26,7 @@
 //! ```
 //! # extern crate metered;
 //! # extern crate rand;
-//! 
+//!
 //! use metered::{metered, Throughput, HitCount};
 //!
 //! #[derive(Default, Debug)]
@@ -42,7 +42,7 @@
 //!         std::thread::sleep(delay);
 //!     }   
 //! }
-//! 
+//!
 //! # fn main() {
 //! # }
 //! ```
@@ -57,7 +57,7 @@
 //!
 //! ```
 //! use metered::{measure, HitCount, ErrorCount};
-//! 
+//!
 //! #[derive(Default, Debug)]
 //! struct TestMetrics {
 //!     hit_count: HitCount,

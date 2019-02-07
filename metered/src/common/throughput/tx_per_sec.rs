@@ -32,19 +32,20 @@ impl<T: Instant> RecordThroughput for std::cell::RefCell<TxPerSec<T>> {
 
 impl<T: Instant> TxPerSec<T> {
     pub fn on_result(&mut self) {
-        self.count += 1;
-        let elapsed_millis = if let Some(ref last) = self.last {
-            last.elapsed_millis()
+        // Record previous count if the 1-sec window has closed
+        if let Some(ref last) = self.last {
+            let elapsed_millis = last.elapsed_millis();
+            if elapsed_millis > 1000 {
+                self.hdr_histogram.record(self.count);
+                self.count = 0;
+                self.last = Some(T::now());
+            }
         } else {
+            // Start a new window
             self.last = Some(T::now());
-            0
         };
 
-        if elapsed_millis > 1000 {
-            self.hdr_histogram.record(self.count);
-            self.count = 0;
-            self.last = None;
-        }
+        self.count += 1;
     }
 
     pub fn clear(&mut self) {
