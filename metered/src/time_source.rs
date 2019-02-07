@@ -22,6 +22,6 @@ impl Instant for StdInstant {
     fn elapsed_millis(&self) -> u64 {
         let elapsed = self.0.elapsed();
 
-        elapsed.as_secs() * 1000 + (elapsed.subsec_nanos() / 1_000_000) as u64
+        elapsed.as_secs() * 1000 + u64::from(elapsed.subsec_millis())
     }
 }

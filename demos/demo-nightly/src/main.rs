@@ -76,7 +76,7 @@ fn test_biz() {
 
 
     for t in threads {
-        let _ = t.join().unwrap();
+        t.join().unwrap();
     }
 
 
