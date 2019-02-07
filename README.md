@@ -18,7 +18,7 @@ Metered is built with the following principles in mind:
 
  * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.1.2/metered/metric/trait.Metric.html) trait with a specific behavior.
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.1.2/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
 
 ## Using Metered
