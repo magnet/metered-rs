@@ -11,7 +11,19 @@ https://www.rust-lang.org)
 
 ## Fast, ergonomic metrics for Rust!
 
-Metered helps you measure the performance of your programs in production. Inspired by Coda Hale's Java metrics library, Metered makes live measurements easy by providing measurement declarative and procedural macros, and a variety of useful metrics ready out-of-the-box:
+Metered helps you measure the performance of your programs in production. Inspired by Coda Hale's Java metrics library, Metered makes live measurements easy by providing declarative and procedural macros to measure your program without altering your logic.
+
+Metered is built with the following principles in mind:
+ * **high ergonomics but no magic**: measuring code should just be a matter of annotating code. Metered lets you build your own metric registries from bare metrics, or will generate one using procedural macros. It does not use shared globals or statics.
+
+ * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
+
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.1.2/metered/metric/trait.Metric.html) trait with a specific behavior.
+
+
+## Using Metered
+
+Metered comes with a variety of useful metrics ready out-of-the-box:
 * `HitCount`: a counter tracking how much a piece of code was hit.
 * `ErrorCount`: a counter tracking how many errors were returned -- (works on any expression returning a std `Result`)
 * `InFlight`: a gauge tracking how many requests are active 
@@ -68,33 +80,29 @@ Then, we must annotate which methods we wish to measure using the `measure` attr
 
 Let's look at `biz`'s code a second: it's a blocking method that returns after between 0 and 200ms, using `rand::random`. Since `random` has a random distribution, we can expect the mean sleep time to be around 100ms. That would mean around 10 calls per second per thread.
 
-In the following test, we spawn 5 threads that each will call `biz()` 20 times. We thus can expect a hit count of 100, and around 50 calls per second (10 per thread, with 5 threads).
+In the following test, we spawn 5 threads that each will call `biz()` 200 times. We thus can expect a hit count of 1000, that it will take around 20 seconds (which means 20 samples, since we collect one sample per second), and around 50 calls per second (10 per thread, with 5 threads).
 
 ```rust
+use std::thread;
+use std::sync::Arc;
+
 fn test_biz() {
-    use std::thread;
-    use std::sync::Arc;
-    use std::ops::Deref;
-
     let biz = Arc::new(Biz::default());
-
     let mut threads = Vec::new();
     for _ in 0..5 {
         let biz = Arc::clone(&biz);
         let t = thread::spawn(move || {
-            for _ in 0..20 {
+            for _ in 0..200 {
                 biz.biz();
             }
         });
         threads.push(t);
     }
-
     for t in threads {
-        let _ = t.join().unwrap();
+        t.join().unwrap();
     }
-
     // Print the results!
-    let serialized = serde_yaml::to_string(biz.deref()).unwrap();
+    let serialized = serde_yaml::to_string(&*biz).unwrap();
     println!("{}", serialized);
 }
 ```
@@ -103,22 +111,22 @@ We can then use serde to serialize our type as YAML:
 ```yaml
 metrics:
   biz:
-    hit_count: 100
+    hit_count: 1000
     throughput:
-      - samples: 2
-        min: 46
-        max: 52
-        mean: 49.0
-        stdev: 3.0
-        90%ile: 52
-        95%ile: 52
-        99%ile: 52
-        99.9%ile: 52
-        99.99%ile: 52
+      - samples: 20
+        min: 35
+        max: 58
+        mean: 49.75
+        stdev: 5.146600819958742
+        90%ile: 55
+        95%ile: 55
+        99%ile: 58
+        99.9%ile: 58
+        99.99%ile: 58
       - ~
 ```
 
-We see we indead have a mean of 49 calls per second, which corresponds to our expectations.
+We see we indead have a mean of 49.75 calls per second, which corresponds to our expectations.
 
 The Hdr Histogram backing these statistics is able to give much more than fixed percentiles, but this is a practical view when using text. For a better performance analysis, please watch Gil Tene's talks ;-).
 
@@ -158,9 +166,9 @@ The `measure` keyword can be added several times on an `impl` block or method, w
 
 ### Design
 
-Do you like Metered's custom attribute parsing, which lets you use reserved keywords and arbitrary Rust syntax? The code has been extracted to the [Synattra](https://github.com/magnet/synattra) project, which provides useful methods on top of the Syn parser for Attribute parsing!
+Metered's custom attribute parsing supports using reserved keywords and arbitrary Rust syntax. The code has been extracted to the [Synattra](https://github.com/magnet/synattra) project, which provides useful methods on top of the Syn parser for Attribute parsing.
 
-Do you want to build a project that wraps method calls the same way Metrics does, regardless of whether they're `async` blocks or not? That code has been extracted to the [Aspect-rs](https://github.com/magnet/aspect-rs) project!
+Metered's metrics can wrap any piece of code, regardless of whether they're `async` blocks or not, using hygienic macros to emulate an approach similar to aspect-oriented programming. That code has been extracted to the [Aspect-rs](https://github.com/magnet/aspect-rs) project!
 
 
 ## License

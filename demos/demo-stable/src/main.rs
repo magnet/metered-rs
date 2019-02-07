@@ -42,30 +42,28 @@ fn simple_api_demo() {
     println!("{}", serialized);
 }
 
+use std::thread;
+use std::sync::Arc;
+
 fn test_biz() {
-    use std::ops::Deref;
-    use std::sync::Arc;
-    use std::thread;
-
+    println!("Running Biz throughput demo...(will take 20 seconds)");
     let biz = Arc::new(Biz::default());
-
     let mut threads = Vec::new();
     for _ in 0..5 {
         let biz = Arc::clone(&biz);
         let t = thread::spawn(move || {
-            for _ in 0..20 {
+            for _ in 0..200 {
                 biz.biz();
             }
         });
         threads.push(t);
     }
-
     for t in threads {
-        let _ = t.join().unwrap();
+        t.join().unwrap();
     }
-
+    println!("Running Biz throughput demo... done! Here are the metrics for that run:");
     // Print the results!
-    let serialized = serde_yaml::to_string(biz.deref()).unwrap();
+    let serialized = serde_yaml::to_string(&*biz).unwrap();
     println!("{}", serialized);
 }
 
