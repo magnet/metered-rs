@@ -7,19 +7,21 @@
 //! * [`ResponseTime`](common/struct.ResponseTime.html): statistics backed by an HdrHistogram of the duration of an expression
 //! * [`Throughput`](common/struct.Throughput.html): statistics backed by an HdrHistogram of how many times an expression is called per second.
 //!
-//! These metrics are usually applied to methods, with provided procedural macros that generate the boilerplate for us.
+//! These metrics are usually applied to methods, using provided procedural macros that generate the boilerplate.
 //!
-//! For better performance, these stock metrics can be customized to use non-thread safe (`!Sync`/`!Send`) datastructures. For ergonomy reasons, stock metrics default to thread-safe datastructures, implemented using lock-free strategies where possible.
+//! To achieve higher performance, these stock metrics can be customized to use non-thread safe (`!Sync`/`!Send`) datastructures, but they default to thread-safe datastructures implemented using lock-free strategies where possible. This is an ergonomical choice to provide defaults that work in all situations.
 //!
-//! Metered is designed as a zero-overhead abstraction -- in the sense that the higher-level ergonomics should not cost over manually adding metrics. Stock metrics will *not* allocate memory after they're initialized the first time.  However, they are triggered at every method call and it can be interesting to use lighter metrics (e.g [`HitCount`](common/struct.HitCount.html)) in very hot code paths and favour heavier metrics ([`Throughput`](common/struct.Throughput.html), [`ResponseTime`](common/struct.ResponseTime.html)) in entry points.
+//! Metered is designed as a zero-overhead abstraction -- in the sense that the higher-level ergonomics should not cost over manually adding metrics. Notably, stock metrics will *not* allocate memory after they're initialized the first time.  However, they are triggered at every method call and it can be interesting to use lighter metrics (e.g [`HitCount`](common/struct.HitCount.html)) in hot code paths and favour heavier metrics ([`Throughput`](common/struct.Throughput.html), [`ResponseTime`](common/struct.ResponseTime.html)) in higher-level entry points.
 //!
 //! If a metric you need is missing, or if you want to customize a metric (for instance, to track how many times a specific error occurs, or react depending on your return type), it is possible to implement your own metrics simply by implementing the [`Metric`](metric/trait.Metric.html) trait .
 //!
-//! Metered does not use statics or shared global state. Instead, it lets you either build your own metric registry using the metrics you need, or can generate a metric registry for you using method attributes. Metered will generate one registry per `impl` block annotated with the `metered` attribute, under the name provided as the `registry` parameter. By default, Metered will expect the registry to be accessed as `self.metrics` but the expression can be overridden with the `registry_expr` attribute parameter. See the demo for more examples.
+//! Metered does not use statics or shared global state. Instead, it lets you either build your own metric registry using the metrics you need, or can generate a metric registry for you using method attributes. Metered will generate one registry per `impl` block annotated with the `metered` attribute, under the name provided as the `registry` parameter. By default, Metered will expect the registry to be accessed as `self.metrics` but the expression can be overridden with the `registry_expr` attribute parameter. See the demos for more examples.
 //!
-//! Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Adapters for metric storage and monitoring systems are planned (contributions welcome!). Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
+//! Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
 //!
 //! Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, [`ResponseTime`](common/struct.ResponseTime.html) will return the completion time across `await!` invocations).
+//! 
+//! Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
 //!
 //! ## Example using procedural macros (recommended)
 //!
