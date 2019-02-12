@@ -2,29 +2,29 @@
 
 use crate::clear::Clear;
 use crate::metric::Histogram;
-use atomic_refcell::AtomicRefCell;
+use parking_lot::Mutex;
 use serde::{Serialize, Serializer};
 
 /// A thread-safe implementation of HdrHistogram
 pub struct AtomicHdrHistogram {
-    inner: AtomicRefCell<HdrHistogram>,
+    inner: Mutex<HdrHistogram>,
 }
 
 impl Histogram for AtomicHdrHistogram {
     fn with_bound(max_bound: u64) -> Self {
         let histo = HdrHistogram::with_bound(max_bound);
-        let inner = AtomicRefCell::new(histo);
+        let inner = Mutex::new(histo);
         AtomicHdrHistogram { inner }
     }
 
     fn record(&self, value: u64) {
-        self.inner.borrow_mut().record(value);
+        self.inner.lock().record(value);
     }
 }
 
 impl Clear for AtomicHdrHistogram {
     fn clear(&self) {
-        self.inner.borrow_mut().clear();
+        self.inner.lock().clear();
     }
 }
 
@@ -34,7 +34,7 @@ impl Serialize for AtomicHdrHistogram {
         S: Serializer,
     {
         use std::ops::Deref;
-        let inner = self.inner.borrow();
+        let inner = self.inner.lock();
         let inner = inner.deref();
         Serialize::serialize(inner, serializer)
     }
@@ -44,8 +44,8 @@ use std::fmt;
 use std::fmt::Debug;
 impl Debug for AtomicHdrHistogram {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let histo = self.inner.borrow();
-        write!(f, "AtomicHdrHistogram {{ {:?} }}", &histo)
+        let histo = self.inner.lock();
+        write!(f, "AtomicHdrHistogram {{ {:?} }}", &*histo)
     }
 }
 
