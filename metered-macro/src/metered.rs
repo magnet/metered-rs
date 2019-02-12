@@ -95,18 +95,30 @@ impl Weave for MeteredWeave {
         fn_attr: &[Rc<<Self as ParseAttributes>::Type>],
     ) -> syn::Result<syn::Block> {
         let metered = main_attr.to_metered();
-        let block = &item_fn.block;
         let ident = &item_fn.sig.ident;
+        let block = &item_fn.block;
+        // We must alter the block to capture early returns
+        // using a closure, and handle the async case.
 
-        let r: proc_macro::TokenStream = measure_list(
-            &metered.registry_expr,
-            &ident,
-            fn_attr,
-            quote! { #block }.into(),
-        )
-        .into();
+        let async_kw = item_fn.sig.asyncness;
+        let closure = syn::parse2::<syn::Expr>(quote! {
+            #async_kw move || #block
+        })?;
 
-        let new_block: syn::Block = syn::parse(r).expect("block");
+        let mut outer_block = quote! {
+           (#closure)()
+        };
+
+        // If the closure is async, we must await.
+        if async_kw.is_some() {
+            outer_block = quote! {
+                std::r#await!(#outer_block)
+            };
+        }
+
+        let r = measure_list(&metered.registry_expr, &ident, fn_attr, outer_block);
+
+        let new_block: syn::Block = syn::parse2(r)?;
         Ok(new_block)
     }
 }
@@ -123,10 +135,8 @@ fn measure_list(
     registry_expr: &syn::Expr,
     fun_ident: &syn::Ident,
     measure_request_attrs: &[Rc<MeasureRequestAttribute>],
-    expr: TokenStream,
-) -> TokenStream {
-    let mut inner: proc_macro2::TokenStream = expr.into();
-
+    mut inner: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     // Recursive macro invocations
     for measure_req_attr in measure_request_attrs.iter() {
         let metric_requests = measure_req_attr.to_requests();
@@ -158,11 +168,9 @@ fn measure_list(
     }
 
     // Add final braces
-    inner = quote! {
+    quote! {
         {
             #inner
         }
-    };
-
-    inner.into()
+    }
 }

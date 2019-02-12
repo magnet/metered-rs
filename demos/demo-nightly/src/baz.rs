@@ -71,6 +71,11 @@ impl Baz {
         }
     }
 
+    #[measure]
+    pub unsafe fn bad(&self, v: &[u8]) {
+        std::str::from_utf8_unchecked(v);
+    }
+
     // This is not measured either
     pub fn bur() {
         println!("bur");
