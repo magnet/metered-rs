@@ -7,7 +7,7 @@ pub struct Baz {
     metric_reg: BazMetricRegistry,
 }
 
-#[metered(registry = BazMetricRegistry, /* default = self.metrics */ registry_expr = self.metric_reg)]
+#[metered(registry = BazMetricRegistry, /* default = self.metrics */ registry_expr = self.metric_reg, visibility = pub(self))]
 #[measure(InFlight)] // Applies to all methods that have the `measure` attribute
 impl Baz {
     // This is measured with an InFlight gauge, because it's the default on the block.

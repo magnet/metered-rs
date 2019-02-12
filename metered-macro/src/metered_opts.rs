@@ -12,6 +12,7 @@ pub struct Metered<'a> {
     pub registry_ident: &'a syn::Ident,
     pub registry_name: String,
     pub registry_expr: Cow<'a, syn::Expr>,
+    pub visibility: Cow<'a, syn::Visibility>,
 }
 
 pub struct MeteredKeyValAttribute {
@@ -83,10 +84,26 @@ impl MeteredKeyValAttribute {
             .map(|id| Cow::Borrowed(id))
             .unwrap_or_else(|| Cow::Owned(syn::parse_str::<syn::Expr>("self.metrics").unwrap()));
 
+        let visibility = self
+            .values
+            .iter()
+            .filter_map(|opt| {
+                if let MeteredOption::Visibility(tpe) = opt {
+                    Some(&tpe.value)
+                } else {
+                    None
+                }
+            })
+            .next()
+            .map(|id| Cow::Borrowed(id))
+            .unwrap_or_else(|| {
+                Cow::Owned(syn::parse_str::<syn::Visibility>("pub(crate)").unwrap())
+            });
         Metered {
             registry_ident,
             registry_name,
             registry_expr,
+            visibility,
         }
     }
 }
@@ -106,15 +123,19 @@ impl Parse for MeteredKeyValAttribute {
 mod kw {
     syn::custom_keyword!(registry);
     syn::custom_keyword!(registry_expr);
+    syn::custom_keyword!(visibility);
 }
 
 pub type MeteredRegistryOption = KVOption<kw::registry, syn::Ident>;
 
 pub type MeteredRegistryExprOption = KVOption<kw::registry_expr, syn::Expr>;
 
+pub type MeteredVisibilityOption = KVOption<kw::visibility, syn::Visibility>;
+
 pub enum MeteredOption {
     Registry(MeteredRegistryOption),
     RegistryExpr(MeteredRegistryExprOption),
+    Visibility(MeteredVisibilityOption),
 }
 
 impl MeteredOption {
@@ -123,6 +144,7 @@ impl MeteredOption {
         match self {
             MeteredOption::Registry(_) => <kw::registry>::display(),
             MeteredOption::RegistryExpr(_) => <kw::registry_expr>::display(),
+            MeteredOption::Visibility(_) => <kw::visibility>::display(),
         }
     }
 }
@@ -133,6 +155,8 @@ impl Parse for MeteredOption {
             Ok(input.parse_as(MeteredOption::Registry)?)
         } else if MeteredRegistryExprOption::peek(input) {
             Ok(input.parse_as(MeteredOption::RegistryExpr)?)
+        } else if MeteredVisibilityOption::peek(input) {
+            Ok(input.parse_as(MeteredOption::Visibility)?)
         } else {
             let err = format!("invalid metered option: {}", input);
             Err(input.error(err))

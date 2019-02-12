@@ -17,10 +17,12 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     let measured = &woven_impl_block.woven_fns;
     let registry_name = &metered.registry_name;
     let registry_ident = &metered.registry_ident;
+    let visibility = &metered.visibility;
 
     let mut code = quote! {};
 
     let mut reg_fields = quote! {};
+
     for (fun_name, _) in measured.iter() {
         use heck::CamelCase;
         let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
@@ -28,7 +30,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
 
         reg_fields = quote! {
             #reg_fields
-            #fun_name : #fun_registry_ident,
+            pub #fun_name : #fun_registry_ident,
         }
     }
 
@@ -36,7 +38,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         #code
 
         #[derive(Debug, Default, serde::Serialize)]
-        struct #registry_ident {
+        #visibility struct #registry_ident {
             #reg_fields
         }
     };
@@ -59,7 +61,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
 
                 fun_reg_fields = quote! {
                     #fun_reg_fields
-                    #metric_field : #metric_type,
+                    pub #metric_field : #metric_type,
                 }
             }
         }
@@ -68,7 +70,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
             #code
 
             #[derive(Debug, Default, serde::Serialize)]
-            struct #fun_registry_ident {
+            #visibility struct #fun_registry_ident {
                 #fun_reg_fields
             }
         };
