@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
+use futures::compat::Future01CompatExt;
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Baz {
@@ -46,7 +47,7 @@ impl Baz {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 
         let when = std::time::Instant::now() + delay;
-        tokio::await!(tokio::timer::Delay::new(when)).map_err(|_| "Tokio timer error")?;
+        tokio::timer::Delay::new(when).compat().await.map_err(|_| "Tokio timer error")?;
         if !should_fail {
             println!("baz !");
             Ok(())
@@ -61,7 +62,7 @@ impl Baz {
             let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 
             let when = std::time::Instant::now() + delay;
-            tokio::await!(tokio::timer::Delay::new(when)).map_err(|_| "Tokio timer error")?;
+            tokio::timer::Delay::new(when).compat().await.map_err(|_| "Tokio timer error")?;
             if !should_fail {
                 println!("baz !");
                 Ok(())
