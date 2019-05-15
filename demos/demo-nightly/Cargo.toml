@@ -8,10 +8,15 @@ edition = "2018"
 [workspace]
 
 [dependencies]
-metered = { path = "../../metered", version = "0.1.0" }
+metered = { path = "../../metered" }
 hdrhistogram = "6.1.1"
 rand = "0.6.5"
 atomic = "0.4"
-tokio = { version = "0.1.15", features = ["async-await-preview"] }
+tokio = "0.1.20"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
+
+[dependencies.futures]
+package = "futures-preview"
+version = "0.3.0-alpha.16"
+features = ["nightly", "async-await", "compat"]

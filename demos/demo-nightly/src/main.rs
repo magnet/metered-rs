@@ -1,6 +1,8 @@
-#![feature(await_macro, async_await, futures_api)]
+#![feature(await_macro, async_await)]
 
 use metered::*;
+use futures::future::{FutureExt, TryFutureExt};
+
 mod baz;
 use baz::Baz;
 mod biz;
@@ -90,5 +92,5 @@ fn main() {
 
     sync_procmacro_demo(&baz);
 
-    tokio::run_async(async_procmacro_demo(baz));
+    tokio::run(async_procmacro_demo(baz).unit_error().boxed().compat());
 }
