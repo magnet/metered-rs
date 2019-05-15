@@ -111,11 +111,19 @@ impl Weave for MeteredWeave {
            (#closure)()
         };
 
+    
         // If the closure is async, we must await.
         if async_kw.is_some() {
-            outer_block = quote! {
-                std::r#await!(#outer_block)
-            };
+
+            // For versions before `.await` stabilization,
+            // We cannot use the `await` keyword in the `quote!` macro
+            // We'd like to achieve the following code:
+
+            // outer_block = quote! {
+            //    #outer_block.await
+            //};
+
+            outer_block = syn::parse_str(&format!("{}.await", outer_block))?;
         }
 
         let r = measure_list(&metered.registry_expr, &ident, fn_attr, outer_block);
