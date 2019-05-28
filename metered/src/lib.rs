@@ -19,7 +19,7 @@
 //!
 //! Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
 //!
-//! Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, [`ResponseTime`](common/struct.ResponseTime.html) will return the completion time across `await!` invocations).
+//! Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, [`ResponseTime`](common/struct.ResponseTime.html) will return the completion time across `await`'ed invocations).
 //!
 //! Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
 //!

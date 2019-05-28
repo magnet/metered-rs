@@ -18,9 +18,20 @@ Metered is built with the following principles in mind:
 
  * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.1.2/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.2.0/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
  Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
+
+
+## Changelog
+
+* 0.2.0:
+  * Support for `.await` notation users (no more `await!()`)
+* 0.1.3:
+  * Fix for early returns in `#[measure]`'ed methods
+  * Removed usage of crate `AtomicRefCell` which sometimes panicked .
+  * Support for custom registry visibility.
+  * Support for `async` + `await!()` macro users.
 
 
 ## Using Metered
@@ -44,7 +55,7 @@ Metered does not use statics or shared global state. Instead, it lets you either
 
 Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
 
-Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, `ResponseTime` will return the completion time across `await!` invocations).
+Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, `ResponseTime` will return the completion time across `await`'ed invocations).
 
 Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
 
