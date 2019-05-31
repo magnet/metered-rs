@@ -5,14 +5,14 @@ use crate::hdr_histogram::AtomicHdrHistogram;
 use crate::metric::{Histogram, Metric};
 use crate::time_source::{Instant, StdInstant};
 use aspect::{Advice, Enter, OnResult};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 /// A metric measuring the response time of an expression, that is the duration the expression needed to complete.
 ///
 /// Because it retrieves the current time before calling the expression, computes the elapsed duration and registers it to an histogram, this is a rather heavy-weight metric better applied at entry-points.
 ///
 /// By default, `ResponseTime` uses an atomic hdr histogram and a synchronized time source, which work better in multithread scenarios. Non-threaded applications can gain performance by using unsynchronized structures instead.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone)]
 pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInstant>(
     H,
     std::marker::PhantomData<T>,
@@ -48,5 +48,22 @@ impl<H: Histogram, T: Instant, R> OnResult<R> for ResponseTime<H, T> {
 impl<H: Histogram, T: Instant> Clear for ResponseTime<H, T> {
     fn clear(&self) {
         self.0.clear();
+    }
+}
+
+impl<H: Histogram + Serialize, T: Instant> Serialize for ResponseTime<H, T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        Serialize::serialize(&self.0, serializer)
+    }
+}
+
+use std::fmt;
+use std::fmt::Debug;
+impl<H: Histogram + Debug, T: Instant> Debug for ResponseTime<H, T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", &self.0)
     }
 }

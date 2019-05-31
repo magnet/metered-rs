@@ -4,7 +4,7 @@ use crate::clear::Clear;
 use crate::metric::Metric;
 use crate::time_source::{Instant, StdInstant};
 use aspect::{Advice, Enter, OnResult};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 mod atomic_tps;
 mod tx_per_sec;
@@ -17,7 +17,7 @@ pub use tx_per_sec::TxPerSec;
 /// Because it retrieves the current time before calling the expression, stores it to appropriatly build time windows of 1 second and registers results to an histogram, this is a rather heavy-weight metric better applied at entry-points.
 ///
 /// By default, `Throughput` uses an atomic transaction count backend and a synchronized time source, which work better in multithread scenarios. Non-threaded applications can gain performance by using unsynchronized structures instead.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone)]
 pub struct Throughput<T: Instant = StdInstant, P: RecordThroughput = AtomicTxPerSec<T>>(
     P,
     std::marker::PhantomData<T>,
@@ -51,5 +51,22 @@ impl<P: RecordThroughput + Serialize, T: Instant, R> OnResult<R> for Throughput<
     fn on_result(&self, _enter: (), _: &R) -> Advice {
         self.0.on_result();
         Advice::Return
+    }
+}
+
+impl<P: RecordThroughput + Serialize, T: Instant> Serialize for Throughput<T, P> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        Serialize::serialize(&self.0, serializer)
+    }
+}
+
+use std::fmt;
+use std::fmt::Debug;
+impl<P: RecordThroughput + Debug, T: Instant> Debug for Throughput<T, P> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", &self.0)
     }
 }
