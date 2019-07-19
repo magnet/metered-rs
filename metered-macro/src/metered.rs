@@ -102,10 +102,16 @@ impl Weave for MeteredWeave {
         // We must alter the block to capture early returns
         // using a closure, and handle the async case.
 
-        let async_kw = item_fn.sig.asyncness;
-        let closure = syn::parse2::<syn::Expr>(quote! {
-            #async_kw move || #block
-        })?;
+        
+        let closure = if item_fn.sig.asyncness.is_some() { 
+            syn::parse2::<syn::Expr>(quote! {
+                move || async move #block 
+            })?
+        } else {
+            syn::parse2::<syn::Expr>(quote! {
+                move || #block 
+            })?
+        };
 
         let mut outer_block = quote! {
            (#closure)()
@@ -113,7 +119,7 @@ impl Weave for MeteredWeave {
 
     
         // If the closure is async, we must await.
-        if async_kw.is_some() {
+        if item_fn.sig.asyncness.is_some() {
 
             // For versions before `.await` stabilization,
             // We cannot use the `await` keyword in the `quote!` macro
