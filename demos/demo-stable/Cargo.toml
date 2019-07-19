@@ -9,8 +9,8 @@ edition = "2018"
 
 [dependencies]
 metered = { path = "../../metered" }
-hdrhistogram = "6.1"
-rand = "0.6"
+hdrhistogram = "6.3"
+rand = "0.7"
 atomic = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"

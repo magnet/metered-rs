@@ -25,6 +25,9 @@ Metered is built with the following principles in mind:
 
 ## Changelog
 
+* 0.2.2:
+  * Async support in `#measured` methods don't rely on async closures anymore, so client code will not require the `async_closure` feature gate.
+  * Updated dependency versions
 * 0.2.1:
   * Under certain circumstances, Serde would serialize "nulls" for `PhantomData` markers in `ResponseTime` and `Throughput` metrics. They are now explicitely excluded.
 * 0.2.0:
