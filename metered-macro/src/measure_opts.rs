@@ -226,8 +226,7 @@ fn make_field_name(type_path: &syn::TypePath) -> String {
         .path
         .segments
         .last()
-        .unwrap()
-        .value()
+        .unwrap() // never empty
         .ident
         .to_string()
         .to_snake_case()

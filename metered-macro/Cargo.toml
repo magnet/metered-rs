@@ -1,6 +1,6 @@
 [package]
 name = "metered-macro"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 license = "Apache-2.0 OR MIT"
 readme = "../README.md"
@@ -13,13 +13,13 @@ categories = ["rust-patterns", "development-tools::profiling", "data-structures"
 edition = "2018"
 
 [dependencies]
-syn = {version= "0.15", features = ["full"] }
-synattra = "0.1"
-aspect-weave =  "0.1"
-quote = "0.6"
-proc-macro2 = "0.4"
+syn = {version= "1.0", features = ["full"] }
+aspect-weave = "0.2.0"
+synattra = "0.2.0"
+quote = "1.0"
+proc-macro2 = "1.0"
 heck = "0.3"
-indexmap = "1.0"
+indexmap = "1.1"
 
 
 

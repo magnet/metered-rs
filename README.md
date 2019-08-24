@@ -18,13 +18,17 @@ Metered is built with the following principles in mind:
 
  * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.2.1/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.3.0/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
  Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
 
 
 ## Changelog
 
+* 0.3.0:
+  * Fix to preserve span in `async` measured methods.
+  * Update nightly sample for new syntax and Tokio 0.2-alpha (using std futures, will need Rust >= 1.39, nightly or not)
+  * Updated dependencies to use `syn`, `proc-macro2` and `quote` 1.0
 * 0.2.2:
   * Async support in `#measured` methods don't rely on async closures anymore, so client code will not require the `async_closure` feature gate.
   * Updated dependency versions
