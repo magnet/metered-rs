@@ -1,13 +1,9 @@
-#![feature(await_macro, async_await)]
-
 use metered::*;
-use futures::future::{FutureExt, TryFutureExt};
 
 mod baz;
 use baz::Baz;
 mod biz;
 use biz::Biz;
-
 
 #[derive(Default, Debug, serde::Serialize)]
 struct TestMetrics {
@@ -38,9 +34,8 @@ fn sync_procmacro_demo(baz: &Baz) {
 }
 
 async fn async_procmacro_demo(baz: Baz) {
-
     for i in 1..=5 {
-        let _ = await!(baz.baz(i % 3 == 0));
+        let _ = baz.baz(i % 3 == 0).await;
     }
 
     // Print the results!
@@ -58,8 +53,8 @@ fn simple_api_demo() {
     println!("{}", serialized);
 }
 
-use std::thread;
 use std::sync::Arc;
+use std::thread;
 
 fn test_biz() {
     println!("Running Biz throughput demo...(will take 20 seconds)");
@@ -91,6 +86,6 @@ fn main() {
     let baz = Baz::default();
 
     sync_procmacro_demo(&baz);
-
-    tokio::run(async_procmacro_demo(baz).unit_error().boxed().compat());
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async_procmacro_demo(baz));
 }

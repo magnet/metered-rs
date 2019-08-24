@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
-use futures::compat::Future01CompatExt;
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Baz {
@@ -47,7 +46,7 @@ impl Baz {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 
         let when = std::time::Instant::now() + delay;
-        tokio::timer::Delay::new(when).compat().await.map_err(|_| "Tokio timer error")?;
+        tokio::timer::Delay::new(when).await;
         if !should_fail {
             println!("baz !");
             Ok(())
@@ -57,12 +56,15 @@ impl Baz {
     }
 
     #[measure([ResponseTime])]
-    pub fn bazium(&self, should_fail: bool) -> impl std::future::Future<Output = Result<(), &'static str>> {
+    pub fn bazium(
+        &self,
+        should_fail: bool,
+    ) -> impl std::future::Future<Output = Result<(), &'static str>> {
         async move {
             let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
 
             let when = std::time::Instant::now() + delay;
-            tokio::timer::Delay::new(when).compat().await.map_err(|_| "Tokio timer error")?;
+            tokio::timer::Delay::new(when).await;
             if !should_fail {
                 println!("baz !");
                 Ok(())

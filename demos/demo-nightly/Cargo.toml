@@ -12,11 +12,7 @@ metered = { path = "../../metered" }
 hdrhistogram = "6.3"
 rand = "0.7"
 atomic = "0.4"
-tokio = "0.1.22"
+tokio = "0.2.0-alpha.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 
-[dependencies.futures]
-package = "futures-preview"
-version = "0.3.0-alpha.17"
-features = ["nightly", "async-await", "compat"]
