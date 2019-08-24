@@ -102,39 +102,29 @@ impl Weave for MeteredWeave {
         // We must alter the block to capture early returns
         // using a closure, and handle the async case.
 
-        
-        let closure = if item_fn.sig.asyncness.is_some() { 
-            syn::parse2::<syn::Expr>(quote! {
-                move || async move #block 
-            })?
-        } else {
-            syn::parse2::<syn::Expr>(quote! {
-                move || #block 
-            })?
-        };
-
-        let mut outer_block = quote! {
-           (#closure)()
-        };
-
-    
-        // If the closure is async, we must await.
-        if item_fn.sig.asyncness.is_some() {
-
+        let outer_block = if item_fn.sig.asyncness.is_some() {
             // For versions before `.await` stabilization,
             // We cannot use the `await` keyword in the `quote!` macro
-            // We'd like to achieve the following code:
+            // We'd like to simply be able to put this in the `quote!`:
+            //
+            // (move || async move #block)().await`
 
-            // outer_block = quote! {
-            //    #outer_block.await
-            //};
-
-            outer_block = syn::parse_str(&format!("{}.await", outer_block))?;
-        }
+            let await_fut = syn::parse_str::<syn::Expr>("fut.await")?;
+            quote! {
+                {
+                    let fut = (move || async move #block)();
+                    #await_fut
+                }
+            }
+        } else {
+            quote! {
+                (move || #block)()
+            }
+        };
 
         let r = measure_list(&metered.registry_expr, &ident, fn_attr, outer_block);
 
-        let new_block: syn::Block = syn::parse2(r)?;
+        let new_block = syn::parse2::<syn::Block>(r)?;
         Ok(new_block)
     }
 }
