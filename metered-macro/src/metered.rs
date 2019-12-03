@@ -38,6 +38,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         #code
 
         #[derive(Debug, Default, serde::Serialize)]
+        #[allow(missing_docs)]
         #visibility struct #registry_ident {
             #reg_fields
         }
@@ -70,6 +71,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
             #code
 
             #[derive(Debug, Default, serde::Serialize)]
+            #[allow(missing_docs)]
             #visibility struct #fun_registry_ident {
                 #fun_reg_fields
             }
