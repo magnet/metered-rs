@@ -106,11 +106,10 @@ pub use aspect::Enter;
 /// It applies the metric and the expression is returned unchanged.
 #[macro_export]
 macro_rules! measure {
-    ($metric:ident, $e:expr) => {{
-        let _metric = $metric;
-        let _enter = $crate::Enter::enter(_metric);
+    ($metric:expr, $e:expr) => {{
+        let _enter = $crate::Enter::enter($metric);
         let _result = $e;
-        $crate::metric::on_result(_metric, _enter, &_result);
+        $crate::metric::on_result($metric, _enter, &_result);
         _result
     }};
 }

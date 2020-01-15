@@ -152,27 +152,9 @@ fn measure_list(
         for metric in metric_requests.iter() {
             let metric_var = metric.ident();
             inner = quote! {
-                metered::measure! { #metric_var, #inner }
+                metered::measure! { &#registry_expr.#fun_ident.#metric_var, #inner }
             };
         }
-    }
-
-    // Let-bindings to avoid moving issues
-    for measure_req_attr in measure_request_attrs.iter() {
-        let metric_requests = measure_req_attr.to_requests();
-
-        for metric in metric_requests.iter() {
-            let metric_var = syn::Ident::new(&metric.field_name, proc_macro2::Span::call_site());
-
-            inner = quote! {
-                let #metric_var = &#registry_expr.#fun_ident.#metric_var;
-                #inner
-            };
-        }
-
-        // // Use debug routine if enabled!
-        // if let Some(opt) = metric.debug {
-        // }
     }
 
     // Add final braces

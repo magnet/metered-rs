@@ -12,10 +12,8 @@ struct TestMetrics {
 }
 
 fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
-    let hit_count = &metrics.hit_count;
-    let error_count = &metrics.error_count;
-    measure!(hit_count, {
-        measure!(error_count, {
+    measure!(&metrics.hit_count, {
+        measure!(&metrics.error_count, {
             println!("test !");
             if should_fail {
                 Err(())
