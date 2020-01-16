@@ -67,10 +67,8 @@
 //! }
 //!
 //! fn test(should_fail: bool, metrics: &TestMetrics) -> Result<u32, &'static str> {
-//!     let hit_count = &metrics.hit_count;
-//!     let error_count = &metrics.error_count;
-//!     measure!(hit_count, {
-//!         measure!(error_count, {
+//!     measure!(&metrics.hit_count, {
+//!         measure!(&metrics.error_count, {
 //!             if should_fail {
 //!                 Err("Failed!")
 //!             } else {
