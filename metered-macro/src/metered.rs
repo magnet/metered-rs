@@ -114,13 +114,13 @@ impl Weave for MeteredWeave {
             let await_fut = syn::parse_str::<syn::Expr>("fut.await")?;
             quote! {
                 {
-                    let fut = (move || async move #block)();
+                    let fut = async #block;
                     #await_fut
                 }
             }
         } else {
             quote! {
-                (move || #block)()
+                #block
             }
         };
 
