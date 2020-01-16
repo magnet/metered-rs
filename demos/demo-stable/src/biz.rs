@@ -2,7 +2,6 @@ use metered::{metered, HitCount, Throughput};
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Biz {
-    inc: i32,
     metrics: BizMetrics,
 }
 
