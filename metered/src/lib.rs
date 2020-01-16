@@ -39,10 +39,10 @@
 //! #[metered::metered(registry = BizMetrics)]
 //! impl Biz {
 //!     #[measure([HitCount, Throughput])]
-//!     pub fn biz(&self) {        
+//!     pub fn biz(&self) {
 //!         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
 //!         std::thread::sleep(delay);
-//!     }   
+//!     }
 //! }
 //!
 //! # fn main() {
@@ -105,9 +105,10 @@ pub use aspect::Enter;
 #[macro_export]
 macro_rules! measure {
     ($metric:expr, $e:expr) => {{
-        let _enter = $crate::Enter::enter($metric);
+        let _metric_ptr = $metric as *const _;
+        let _enter = unsafe { $crate::Enter::enter(&(*_metric_ptr)) };
         let _result = $e;
-        $crate::metric::on_result($metric, _enter, &_result);
+        unsafe { $crate::metric::on_result(&(*_metric_ptr), _enter, &_result); }
         _result
     }};
 }
