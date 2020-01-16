@@ -2,6 +2,7 @@ use metered::{metered, HitCount, Throughput};
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Biz {
+    inc: i32,
     metrics: BizMetrics,
 }
 
@@ -14,5 +15,4 @@ impl Biz {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
         std::thread::sleep(delay);
     }
-
 }
