@@ -106,7 +106,7 @@ pub use aspect::Enter;
 macro_rules! measure {
     ($metric:expr, $e:expr) => {{
         let _metric_ptr = $metric as *const _;
-        let _enter = unsafe { $crate::Enter::enter(&(*_metric_ptr)) };
+        let _enter = unsafe { $crate::Enter::enter($metric) };
         let _result = $e;
         unsafe { $crate::metric::on_result(&(*_metric_ptr), _enter, &_result); }
         _result
