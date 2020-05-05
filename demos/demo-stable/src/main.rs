@@ -45,9 +45,18 @@ fn simple_api_demo() {
 use std::thread;
 use std::sync::Arc;
 
+use metered::clear::Clear;
+
 fn test_biz() {
     println!("Running Biz throughput demo...(will take 20 seconds)");
     let biz = Arc::new(Biz::default());
+    do_test_biz(&biz);
+    println!("Clearing Biz metrics and running throughput demo again...(will take 20 seconds)");
+    biz.metrics.clear();
+    do_test_biz(&biz);
+}
+
+fn do_test_biz(biz: &Arc<Biz>) {
     let mut threads = Vec::new();
     for _ in 0..5 {
         let biz = Arc::clone(&biz);
@@ -63,7 +72,7 @@ fn test_biz() {
     }
     println!("Running Biz throughput demo... done! Here are the metrics for that run:");
     // Print the results!
-    let serialized = serde_yaml::to_string(&*biz).unwrap();
+    let serialized = serde_yaml::to_string(&**biz).unwrap();
     println!("{}", serialized);
 }
 
