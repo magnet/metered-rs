@@ -2,7 +2,7 @@ use metered::{metered, HitCount, Throughput};
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Biz {
-    metrics: BizMetrics,
+    pub(crate) metrics: BizMetrics,
 }
 
 #[metered(registry = BizMetrics)]

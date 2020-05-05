@@ -22,6 +22,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     let mut code = quote! {};
 
     let mut reg_fields = quote! {};
+    let mut reg_clears = quote! {};
 
     for (fun_name, _) in measured.iter() {
         use heck::CamelCase;
@@ -31,7 +32,12 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         reg_fields = quote! {
             #reg_fields
             pub #fun_name : #fun_registry_ident,
-        }
+        };
+
+        reg_clears = quote! {
+            #reg_clears
+            self.#fun_name.clear();
+        };
     }
 
     code = quote! {
@@ -41,6 +47,13 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         #[allow(missing_docs)]
         #visibility struct #registry_ident {
             #reg_fields
+        }
+
+
+        impl metered::clear::Clear for #registry_ident {
+            fn clear(&self) {
+                #reg_clears
+            }
         }
     };
 
@@ -52,6 +65,7 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
         let fun_registry_ident = syn::Ident::new(&fun_reg_name, impl_block.impl_token.span);
 
         let mut fun_reg_fields = quote! {};
+        let mut fun_reg_clears = quote! {};
 
         for measure_req_attr in measure_request_attrs.iter() {
             let metric_requests = measure_req_attr.to_requests();
@@ -63,7 +77,12 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
                 fun_reg_fields = quote! {
                     #fun_reg_fields
                     pub #metric_field : #metric_type,
-                }
+                };
+
+                fun_reg_clears = quote! {
+                    #fun_reg_clears
+                    self.#metric_field.clear();
+                };
             }
         }
 
@@ -74,6 +93,12 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
             #[allow(missing_docs)]
             #visibility struct #fun_registry_ident {
                 #fun_reg_fields
+            }
+
+            impl metered::clear::Clear for #fun_registry_ident {
+                fn clear(&self) {
+                    #fun_reg_clears
+                }
             }
         };
     }
