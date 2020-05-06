@@ -5,6 +5,7 @@ use crate::time_source::{Instant, StdInstant};
 use parking_lot::Mutex;
 use serde::{Serialize, Serializer};
 
+/// Threat-safe implementation of `RecordThroughput`. It uses a `Mutex` to wrap `TxPerSec`.
 pub struct AtomicTxPerSec<T: Instant = StdInstant> {
     inner: Mutex<TxPerSec<T>>,
 }
