@@ -1,8 +1,10 @@
 use super::RecordThroughput;
 use crate::hdr_histogram::HdrHistogram;
+use crate::clear::Clear;
 use crate::time_source::Instant;
 use serde::{Serialize, Serializer};
 
+/// Non-thread safe implementation of `RecordThroughput`. Use as `RefCell<TxPerSec<T>>`.
 pub struct TxPerSec<T: Instant> {
     hdr_histogram: HdrHistogram,
     last: Option<T>,
@@ -30,8 +32,14 @@ impl<T: Instant> RecordThroughput for std::cell::RefCell<TxPerSec<T>> {
     }
 }
 
+impl<T: Instant> Clear for std::cell::RefCell<TxPerSec<T>> {
+    fn clear(&self) {
+        self.borrow_mut().clear();
+    }
+}
+
 impl<T: Instant> TxPerSec<T> {
-    pub fn on_result(&mut self) {
+    pub(crate) fn on_result(&mut self) {
         // Record previous count if the 1-sec window has closed
         if let Some(ref last) = self.last {
             let elapsed = last.elapsed_time();
@@ -48,7 +56,7 @@ impl<T: Instant> TxPerSec<T> {
         self.count += 1;
     }
 
-    pub fn clear(&mut self) {
+    pub(crate) fn clear(&mut self) {
         self.hdr_histogram.clear();
         self.last = None;
         self.count = 0;
