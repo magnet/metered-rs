@@ -39,7 +39,7 @@ impl<H: Histogram, T: Instant> Enter for ResponseTime<H, T> {
 
 impl<H: Histogram, T: Instant, R> OnResult<R> for ResponseTime<H, T> {
     fn on_result(&self, enter: T, _: &R) -> Advice {
-        let elapsed = enter.elapsed_millis();
+        let elapsed = enter.elapsed_time();
         self.0.record(elapsed);
         Advice::Return
     }

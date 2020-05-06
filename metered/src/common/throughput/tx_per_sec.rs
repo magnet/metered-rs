@@ -34,8 +34,8 @@ impl<T: Instant> TxPerSec<T> {
     pub fn on_result(&mut self) {
         // Record previous count if the 1-sec window has closed
         if let Some(ref last) = self.last {
-            let elapsed_millis = last.elapsed_millis();
-            if elapsed_millis > 1000 {
+            let elapsed = last.elapsed_time();
+            if elapsed > T::ONE_SEC {
                 self.hdr_histogram.record(self.count);
                 self.count = 0;
                 self.last = Some(T::now());
