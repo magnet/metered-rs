@@ -1,11 +1,11 @@
 use super::RecordThroughput;
 use crate::hdr_histogram::HdrHistogram;
 use crate::clear::Clear;
-use crate::time_source::Instant;
+use crate::time_source::{Instant, StdInstant};
 use serde::{Serialize, Serializer};
 
 /// Non-thread safe implementation of `RecordThroughput`. Use as `RefCell<TxPerSec<T>>`.
-pub struct TxPerSec<T: Instant> {
+pub struct TxPerSec<T: Instant = StdInstant> {
     hdr_histogram: HdrHistogram,
     last: Option<T>,
     count: u64,
