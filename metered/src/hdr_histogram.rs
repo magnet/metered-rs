@@ -130,3 +130,21 @@ impl Debug for HdrHistogram {
         )
     }
 }
+
+use std::cell::RefCell;
+
+impl Histogram for RefCell<HdrHistogram> {
+    fn with_bound(max_value: u64) -> Self {
+        RefCell::new(HdrHistogram::with_bound(max_value))
+    }
+
+    fn record(&self, value: u64) {
+        self.borrow_mut().record(value);
+    }
+}
+
+impl Clear for RefCell<HdrHistogram> {
+    fn clear(&self) {
+        self.borrow_mut().clear();
+    }
+}
