@@ -7,7 +7,9 @@ pub trait Instant {
     /// Creates a new Instant representing the current time.
     fn now() -> Self;
 
-    /// Returns the elapsed time in milliseconds since an Instant was created.
+    /// Returns the elapsed time since an Instant was created.
+    ///
+    /// The unit depends on the Instant's resolution, as defined by the `ONE_SEC` constant.
     fn elapsed_time(&self) -> u64;
 
     /// One second in the instant units.
