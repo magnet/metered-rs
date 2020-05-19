@@ -89,22 +89,54 @@ impl Serialize for HdrHistogram {
         S: Serializer,
     {
         let hdr = &self.histo;
-        let ile = |v| hdr.value_at_percentile(v);
+
+        /// A percentile of this histogram - for supporting serializers this will
+        /// ignore the key (such as `90%ile`) and instead add a dimension to the
+        /// metrics (such as `quantile=0.9`).
+        macro_rules! ile {
+            ($e:expr) => {
+                &MetricAlias(concat!("!|quantile=", $e), hdr.value_at_quantile($e))
+            }
+        }
+
+        /// A 'qualified' metric name - for supporting serializers this will prepend
+        /// the metric name to this key, outputting `response_time_count`, for example
+        /// rather than just `count`.
+        macro_rules! qual {
+            ($e:expr) => {
+                &MetricAlias("<|", $e)
+            }
+        }
+
         use serde::ser::SerializeMap;
 
         let mut tup = serializer.serialize_map(Some(10))?;
-
-        tup.serialize_entry("samples", &hdr.len())?;
-        tup.serialize_entry("min", &hdr.min())?;
-        tup.serialize_entry("max", &hdr.max())?;
-        tup.serialize_entry("mean", &hdr.mean())?;
-        tup.serialize_entry("stdev", &hdr.stdev())?;
-        tup.serialize_entry("90%ile", &ile(90.0))?;
-        tup.serialize_entry("95%ile", &ile(95.0))?;
-        tup.serialize_entry("99%ile", &ile(99.0))?;
-        tup.serialize_entry("99.9%ile", &ile(99.9))?;
-        tup.serialize_entry("99.99%ile", &ile(99.99))?;
+        tup.serialize_entry("samples", qual!(hdr.len()))?;
+        tup.serialize_entry("min", qual!(hdr.min()))?;
+        tup.serialize_entry("max", qual!(hdr.max()))?;
+        tup.serialize_entry("mean", qual!(hdr.mean()))?;
+        tup.serialize_entry("stdev", qual!(hdr.stdev()))?;
+        tup.serialize_entry("90%ile", ile!(0.9))?;
+        tup.serialize_entry("95%ile", ile!(0.95))?;
+        tup.serialize_entry("99%ile", ile!(0.99))?;
+        tup.serialize_entry("99.9%ile", ile!(0.999))?;
+        tup.serialize_entry("99.99%ile", ile!(0.9999))?;
         tup.end()
+    }
+}
+
+/// This is a mocked 'newtype' (eg. `A(u64)`) that instead allows us to
+/// define our own type name that doesn't have to abide by Rust's constraints
+/// on type names. This allows us to do some manipulation of our metrics,
+/// allowing us to add dimensionality to our metrics via key=value pairs, or
+/// key manipulation on serializers that support it.
+struct MetricAlias<T: Serialize>(&'static str, T);
+impl<T: Serialize> Serialize for MetricAlias<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_newtype_struct(self.0, &self.1)
     }
 }
 
