@@ -1,6 +1,6 @@
 use super::RecordThroughput;
-use crate::hdr_histogram::HdrHistogram;
 use crate::clear::Clear;
+use crate::hdr_histogram::HdrHistogram;
 use crate::time_source::{Instant, StdInstant};
 use serde::{Serialize, Serializer};
 
