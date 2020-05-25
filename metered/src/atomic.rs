@@ -27,7 +27,7 @@ impl<T: Copy> AtomicInt<T> {
 }
 
 impl<T: Copy + Display> Debug for AtomicInt<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }

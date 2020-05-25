@@ -70,7 +70,7 @@ impl<H: Histogram + Serialize, T: Instant> Serialize for ResponseTime<H, T> {
 
 use std::{fmt, fmt::Debug};
 impl<H: Histogram + Debug, T: Instant> Debug for ResponseTime<H, T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.0)
     }
 }

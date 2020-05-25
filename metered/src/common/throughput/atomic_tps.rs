@@ -45,7 +45,7 @@ impl<T: Instant> Serialize for AtomicTxPerSec<T> {
 
 use std::{fmt, fmt::Debug};
 impl<T: Instant> Debug for AtomicTxPerSec<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let inner = self.inner.lock();
         write!(f, "{:?}", &*inner)
     }

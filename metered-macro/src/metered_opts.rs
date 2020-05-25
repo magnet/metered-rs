@@ -21,7 +21,7 @@ pub struct MeteredKeyValAttribute {
 }
 
 impl MeteredKeyValAttribute {
-    fn validate(&self, input: ParseStream) -> Result<()> {
+    fn validate(&self, input: ParseStream<'_>) -> Result<()> {
         self.values
             .iter()
             .filter_map(|opt| {
@@ -110,7 +110,7 @@ impl MeteredKeyValAttribute {
 }
 
 impl Parse for MeteredKeyValAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let this = MeteredKeyValAttribute {
             values: input.parse_terminated(MeteredOption::parse)?,
         };
@@ -133,6 +133,7 @@ pub type MeteredRegistryExprOption = KVOption<kw::registry_expr, syn::Expr>;
 
 pub type MeteredVisibilityOption = KVOption<kw::visibility, syn::Visibility>;
 
+#[allow(clippy::large_enum_variant)]
 pub enum MeteredOption {
     Registry(MeteredRegistryOption),
     RegistryExpr(MeteredRegistryExprOption),
@@ -151,7 +152,7 @@ impl MeteredOption {
 }
 
 impl Parse for MeteredOption {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         if MeteredRegistryOption::peek(input) {
             Ok(input.parse_as(MeteredOption::Registry)?)
         } else if MeteredRegistryExprOption::peek(input) {

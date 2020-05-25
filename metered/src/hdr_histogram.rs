@@ -42,7 +42,7 @@ impl Serialize for AtomicHdrHistogram {
 
 use std::{fmt, fmt::Debug};
 impl Debug for AtomicHdrHistogram {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let histo = self.inner.lock();
         write!(f, "AtomicHdrHistogram {{ {:?} }}", &*histo)
     }
@@ -142,7 +142,7 @@ impl<T: Serialize> Serialize for MetricAlias<T> {
 }
 
 impl Debug for HdrHistogram {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let hdr = &self.histo;
         let ile = |v| hdr.value_at_percentile(v);
         write!(

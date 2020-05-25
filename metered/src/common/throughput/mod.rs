@@ -73,7 +73,7 @@ impl<P: RecordThroughput + Serialize, T: Instant> Serialize for Throughput<T, P>
 
 use std::{fmt, fmt::Debug};
 impl<P: RecordThroughput + Debug, T: Instant> Debug for Throughput<T, P> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.0)
     }
 }

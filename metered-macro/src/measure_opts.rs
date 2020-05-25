@@ -41,7 +41,7 @@ impl MeasureRequestAttribute {
 }
 
 impl Parse for MeasureRequestAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         if input.is_empty() {
             Ok(MeasureRequestAttribute::Empty)
         } else {
@@ -68,7 +68,7 @@ impl NonEmptyMeasureRequestAttribute {
 }
 
 impl Parse for NonEmptyMeasureRequestAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let content;
         let paren_token = parenthesized!(content in input);
 
@@ -99,7 +99,7 @@ impl MeasureRequestAttributeInner {
 }
 
 impl Parse for MeasureRequestAttributeInner {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         input
             .try_parse_as(MeasureRequestAttributeInner::TypePath)
             .or_else(|_| input.try_parse_as(MeasureRequestAttributeInner::KeyVal))
@@ -133,7 +133,7 @@ impl MeasureRequestTypePathAttribute {
 }
 
 impl Parse for MeasureRequestTypePathAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         Ok(MeasureRequestTypePathAttribute {
             type_paths: input.parse()?,
         })
@@ -145,7 +145,7 @@ pub struct MeasureRequestKeyValAttribute {
 }
 
 impl MeasureRequestKeyValAttribute {
-    fn validate(&self, input: ParseStream) -> Result<()> {
+    fn validate(&self, input: ParseStream<'_>) -> Result<()> {
         self.values
             .iter()
             .filter_map(|opt| {
@@ -216,7 +216,7 @@ impl MeasureRequestKeyValAttribute {
             v.push(MeasureRequest {
                 tpe: type_path,
                 field_name,
-                debug: debug,
+                debug,
             })
         }
         v
@@ -236,7 +236,7 @@ fn make_field_name(type_path: &syn::TypePath) -> String {
 }
 
 impl Parse for MeasureRequestKeyValAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let this = MeasureRequestKeyValAttribute {
             values: input.parse_terminated(MeasureOptions::parse)?,
         };
@@ -270,7 +270,7 @@ impl MeasureOptions {
 }
 
 impl Parse for MeasureOptions {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         if MeasureTypeOption::peek(input) {
             Ok(input.parse_as(MeasureOptions::Type)?)
         } else if MeasureDebugOption::peek(input) {

@@ -77,7 +77,7 @@ impl<T: Instant> Serialize for TxPerSec<T> {
 
 use std::{fmt, fmt::Debug};
 impl<T: Instant> Debug for TxPerSec<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.hdr_histogram)
     }
 }
