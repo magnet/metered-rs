@@ -1,11 +1,13 @@
-use super::tx_per_sec::TxPerSec;
-use super::RecordThroughput;
-use crate::clear::Clear;
-use crate::time_source::{Instant, StdInstant};
+use super::{tx_per_sec::TxPerSec, RecordThroughput};
+use crate::{
+    clear::Clear,
+    time_source::{Instant, StdInstant},
+};
 use parking_lot::Mutex;
 use serde::{Serialize, Serializer};
 
-/// Thread-safe implementation of `RecordThroughput`. It uses a `Mutex` to wrap `TxPerSec`.
+/// Thread-safe implementation of `RecordThroughput`. It uses a `Mutex` to wrap
+/// `TxPerSec`.
 pub struct AtomicTxPerSec<T: Instant = StdInstant> {
     inner: Mutex<TxPerSec<T>>,
 }
@@ -41,8 +43,7 @@ impl<T: Instant> Serialize for AtomicTxPerSec<T> {
     }
 }
 
-use std::fmt;
-use std::fmt::Debug;
+use std::{fmt, fmt::Debug};
 impl<T: Instant> Debug for AtomicTxPerSec<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let inner = self.inner.lock();

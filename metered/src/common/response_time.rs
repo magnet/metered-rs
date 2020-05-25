@@ -1,17 +1,25 @@
 //! A module providing the `ResponseTime` metric.
 
-use crate::clear::Clear;
-use crate::hdr_histogram::AtomicHdrHistogram;
-use crate::metric::{Histogram, Metric};
-use crate::time_source::{Instant, StdInstant};
+use crate::{
+    clear::Clear,
+    hdr_histogram::AtomicHdrHistogram,
+    metric::{Histogram, Metric},
+    time_source::{Instant, StdInstant},
+};
 use aspect::{Advice, Enter, OnResult};
 use serde::{Serialize, Serializer};
 
-/// A metric measuring the response time of an expression, that is the duration the expression needed to complete.
+/// A metric measuring the response time of an expression, that is the duration
+/// the expression needed to complete.
 ///
-/// Because it retrieves the current time before calling the expression, computes the elapsed duration and registers it to an histogram, this is a rather heavy-weight metric better applied at entry-points.
+/// Because it retrieves the current time before calling the expression,
+/// computes the elapsed duration and registers it to an histogram, this is a
+/// rather heavy-weight metric better applied at entry-points.
 ///
-/// By default, `ResponseTime` uses an atomic hdr histogram and a synchronized time source, which work better in multithread scenarios. Non-threaded applications can gain performance by using unsynchronized structures instead.
+/// By default, `ResponseTime` uses an atomic hdr histogram and a synchronized
+/// time source, which work better in multithread scenarios. Non-threaded
+/// applications can gain performance by using unsynchronized structures
+/// instead.
 #[derive(Clone)]
 pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInstant>(
     H,
@@ -60,8 +68,7 @@ impl<H: Histogram + Serialize, T: Instant> Serialize for ResponseTime<H, T> {
     }
 }
 
-use std::fmt;
-use std::fmt::Debug;
+use std::{fmt, fmt::Debug};
 impl<H: Histogram + Debug, T: Instant> Debug for ResponseTime<H, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", &self.0)

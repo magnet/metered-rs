@@ -1,0 +1,6 @@
+edition = "2018"
+merge_imports = true
+normalize_comments = true
+unstable_features = true
+wrap_comments = true
+

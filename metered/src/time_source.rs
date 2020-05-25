@@ -2,22 +2,24 @@
 
 /// A trait for any time source providing time measurements in milliseconds.
 ///
-/// It is useful to let users provide an unsynchronized  (`!Send`/`!Sync`) time source, unlike std's `Instant`.
+/// It is useful to let users provide an unsynchronized  (`!Send`/`!Sync`) time
+/// source, unlike std's `Instant`.
 pub trait Instant {
     /// Creates a new Instant representing the current time.
     fn now() -> Self;
 
     /// Returns the elapsed time since an Instant was created.
     ///
-    /// The unit depends on the Instant's resolution, as defined by the `ONE_SEC` constant.
+    /// The unit depends on the Instant's resolution, as defined by the
+    /// `ONE_SEC` constant.
     fn elapsed_time(&self) -> u64;
 
     /// One second in the instant units.
     const ONE_SEC: u64;
 }
 
-/// A new-type wrapper for std Instants and Metered's [Instant](trait.Instant.html) trait that
-/// measures time in milliseconds.
+/// A new-type wrapper for std Instants and Metered's
+/// [Instant](trait.Instant.html) trait that measures time in milliseconds.
 #[derive(Debug, Clone)]
 pub struct StdInstant(std::time::Instant);
 impl Instant for StdInstant {
@@ -34,8 +36,8 @@ impl Instant for StdInstant {
     }
 }
 
-/// A new-type wrapper for std Instants and Metered's [Instant](trait.Instant.html) trait that
-/// measures time in microseconds.
+/// A new-type wrapper for std Instants and Metered's
+/// [Instant](trait.Instant.html) trait that measures time in microseconds.
 #[derive(Debug, Clone)]
 pub struct StdInstantMicros(std::time::Instant);
 impl Instant for StdInstantMicros {

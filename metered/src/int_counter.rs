@@ -1,8 +1,7 @@
-//! A module providing thread-safe and unsynchronized implementations for Counters on various unsized integers.
+//! A module providing thread-safe and unsynchronized implementations for
+//! Counters on various unsized integers.
 
-use crate::atomic::AtomicInt;
-use crate::clear::Clear;
-use crate::metric::Counter;
+use crate::{atomic::AtomicInt, clear::Clear, metric::Counter};
 use std::cell::Cell;
 
 macro_rules! impl_counter_for {

@@ -1,7 +1,7 @@
-//! A module providing thread-safe and unsynchronized implementations for Histograms, based on HdrHistogram.
+//! A module providing thread-safe and unsynchronized implementations for
+//! Histograms, based on HdrHistogram.
 
-use crate::clear::Clear;
-use crate::metric::Histogram;
+use crate::{clear::Clear, metric::Histogram};
 use parking_lot::Mutex;
 use serde::{Serialize, Serializer};
 
@@ -40,8 +40,7 @@ impl Serialize for AtomicHdrHistogram {
     }
 }
 
-use std::fmt;
-use std::fmt::Debug;
+use std::{fmt, fmt::Debug};
 impl Debug for AtomicHdrHistogram {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let histo = self.inner.lock();
@@ -61,7 +60,8 @@ pub struct HdrHistogram {
 impl HdrHistogram {
     /// Instantiates a new HdrHistogram with a max_bound
     ///
-    /// For instance, a max_bound of 60 * 60 * 1000 will allow to record durations varying from 1 millisecond to 1 hour.
+    /// For instance, a max_bound of 60 * 60 * 1000 will allow to record
+    /// durations varying from 1 millisecond to 1 hour.
     pub fn with_bound(max_bound: u64) -> Self {
         let histo = hdrhistogram::Histogram::<u64>::new_with_bounds(1, max_bound, 2)
             .expect("Could not instantiate HdrHistogram");
@@ -71,7 +71,8 @@ impl HdrHistogram {
 
     /// Records a value to the histogram
     ///
-    /// This is a saturating record: if the value is higher than `max_bound`, max_bound will be recorded instead.
+    /// This is a saturating record: if the value is higher than `max_bound`,
+    /// max_bound will be recorded instead.
     pub fn record(&mut self, value: u64) {
         // All recordings will be saturating
         self.histo.saturating_record(value);
@@ -90,22 +91,22 @@ impl Serialize for HdrHistogram {
     {
         let hdr = &self.histo;
 
-        /// A percentile of this histogram - for supporting serializers this will
-        /// ignore the key (such as `90%ile`) and instead add a dimension to the
-        /// metrics (such as `quantile=0.9`).
+        /// A percentile of this histogram - for supporting serializers this
+        /// will ignore the key (such as `90%ile`) and instead add a
+        /// dimension to the metrics (such as `quantile=0.9`).
         macro_rules! ile {
             ($e:expr) => {
                 &MetricAlias(concat!("!|quantile=", $e), hdr.value_at_quantile($e))
-            }
+            };
         }
 
-        /// A 'qualified' metric name - for supporting serializers this will prepend
-        /// the metric name to this key, outputting `response_time_count`, for example
-        /// rather than just `count`.
+        /// A 'qualified' metric name - for supporting serializers this will
+        /// prepend the metric name to this key, outputting
+        /// `response_time_count`, for example rather than just `count`.
         macro_rules! qual {
             ($e:expr) => {
                 &MetricAlias("<|", $e)
-            }
+            };
         }
 
         use serde::ser::SerializeMap;

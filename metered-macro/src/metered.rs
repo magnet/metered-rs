@@ -2,8 +2,7 @@
 
 use proc_macro::TokenStream;
 
-use crate::measure_opts::MeasureRequestAttribute;
-use crate::metered_opts::MeteredKeyValAttribute;
+use crate::{measure_opts::MeasureRequestAttribute, metered_opts::MeteredKeyValAttribute};
 
 use aspect_weave::*;
 use std::rc::Rc;
@@ -158,7 +157,7 @@ impl Weave for MeteredWeave {
 impl ParseAttributes for MeteredWeave {
     type Type = MeasureRequestAttribute;
 
-    /*const*/
+    // const
     fn fn_attr_name() -> &'static str {
         "measure"
     }

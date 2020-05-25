@@ -1,10 +1,13 @@
 use super::RecordThroughput;
-use crate::hdr_histogram::HdrHistogram;
-use crate::clear::Clear;
-use crate::time_source::{Instant, StdInstant};
+use crate::{
+    clear::Clear,
+    hdr_histogram::HdrHistogram,
+    time_source::{Instant, StdInstant},
+};
 use serde::{Serialize, Serializer};
 
-/// Non-thread safe implementation of `RecordThroughput`. Use as `RefCell<TxPerSec<T>>`.
+/// Non-thread safe implementation of `RecordThroughput`. Use as
+/// `RefCell<TxPerSec<T>>`.
 pub struct TxPerSec<T: Instant = StdInstant> {
     hdr_histogram: HdrHistogram,
     last: Option<T>,
@@ -72,8 +75,7 @@ impl<T: Instant> Serialize for TxPerSec<T> {
     }
 }
 
-use std::fmt;
-use std::fmt::Debug;
+use std::{fmt, fmt::Debug};
 impl<T: Instant> Debug for TxPerSec<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", &self.hdr_histogram)

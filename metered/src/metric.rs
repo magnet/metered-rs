@@ -9,7 +9,8 @@ use serde::Serialize;
 ///
 /// Metrics wrap expressions to measure them.
 ///
-/// The return type, R, of the expression can be captured to perform special handling.
+/// The return type, R, of the expression can be captured to perform special
+/// handling.
 pub trait Metric<R>: Default + OnResult<R> + Clear + Serialize {}
 
 // Needed to force `measure!` to work only with the `Metric` trait.
@@ -40,6 +41,7 @@ pub trait Histogram: Clear + Serialize {
 
     /// Record a value to the histogram.
     ///
-    /// It will saturate if the value is higher than the histogram's `max_value`.
+    /// It will saturate if the value is higher than the histogram's
+    /// `max_value`.
     fn record(&self, value: u64);
 }

@@ -1,13 +1,18 @@
-//! A module providing new-type Atomic wrapper that implements Debug & Serialize.
+//! A module providing new-type Atomic wrapper that implements Debug &
+//! Serialize.
 
 use serde::{Serialize, Serializer};
-use std::fmt;
-use std::fmt::{Debug, Display};
-use std::sync::atomic::Ordering;
+use std::{
+    fmt,
+    fmt::{Debug, Display},
+    sync::atomic::Ordering,
+};
 
-/// A new-type wrapper over `atomic::Atomic` that supports serde serialization and a cleaner debug output.
+/// A new-type wrapper over `atomic::Atomic` that supports serde serialization
+/// and a cleaner debug output.
 ///
-/// All default operations on the wrapper type are using a relaxed memory ordering, which makes it suitable for counters and little else.
+/// All default operations on the wrapper type are using a relaxed memory
+/// ordering, which makes it suitable for counters and little else.
 #[derive(Default)]
 pub struct AtomicInt<T: Copy> {
     /// The inner atomic instance

@@ -1,27 +1,68 @@
 //! # Fast, ergonomic metrics for Rust!
 //!
-//! Metered helps you measure the performance of your programs in production. Inspired by Coda Hale's Java metrics library, Metered makes live measurements easy by providing measurement declarative and procedural macros, and a variety of useful metrics ready out-of-the-box:
-//! * [`HitCount`](common/struct.HitCount.html): a counter tracking how much a piece of code was hit.
-//! * [`ErrorCount`](common/struct.ErrorCount.html): a counter tracking how many errors were returned -- (works on any expression returning a std `Result`)
-//! * [`InFlight`](common/struct.InFlight.html): a gauge tracking how many requests are active
-//! * [`ResponseTime`](common/struct.ResponseTime.html): statistics backed by an HdrHistogram of the duration of an expression
-//! * [`Throughput`](common/struct.Throughput.html): statistics backed by an HdrHistogram of how many times an expression is called per second.
+//! Metered helps you measure the performance of your programs in production.
+//! Inspired by Coda Hale's Java metrics library, Metered makes live
+//! measurements easy by providing measurement declarative and procedural
+//! macros, and a variety of useful metrics ready out-of-the-box:
+//! * [`HitCount`](common/struct.HitCount.html): a counter tracking how much a
+//!   piece of code was hit.
+//! * [`ErrorCount`](common/struct.ErrorCount.html): a counter tracking how many
+//!   errors were returned -- (works on any expression returning a std `Result`)
+//! * [`InFlight`](common/struct.InFlight.html): a gauge tracking how many
+//!   requests are active
+//! * [`ResponseTime`](common/struct.ResponseTime.html): statistics backed by an
+//!   HdrHistogram of the duration of an expression
+//! * [`Throughput`](common/struct.Throughput.html): statistics backed by an
+//!   HdrHistogram of how many times an expression is called per second.
 //!
-//! These metrics are usually applied to methods, using provided procedural macros that generate the boilerplate.
+//! These metrics are usually applied to methods, using provided procedural
+//! macros that generate the boilerplate.
 //!
-//! To achieve higher performance, these stock metrics can be customized to use non-thread safe (`!Sync`/`!Send`) datastructures, but they default to thread-safe datastructures implemented using lock-free strategies where possible. This is an ergonomical choice to provide defaults that work in all situations.
+//! To achieve higher performance, these stock metrics can be customized to use
+//! non-thread safe (`!Sync`/`!Send`) datastructures, but they default to
+//! thread-safe datastructures implemented using lock-free strategies where
+//! possible. This is an ergonomical choice to provide defaults that work in all
+//! situations.
 //!
-//! Metered is designed as a zero-overhead abstraction -- in the sense that the higher-level ergonomics should not cost over manually adding metrics. Notably, stock metrics will *not* allocate memory after they're initialized the first time.  However, they are triggered at every method call and it can be interesting to use lighter metrics (e.g [`HitCount`](common/struct.HitCount.html)) in hot code paths and favour heavier metrics ([`Throughput`](common/struct.Throughput.html), [`ResponseTime`](common/struct.ResponseTime.html)) in higher-level entry points.
+//! Metered is designed as a zero-overhead abstraction -- in the sense that the
+//! higher-level ergonomics should not cost over manually adding metrics.
+//! Notably, stock metrics will *not* allocate memory after they're initialized
+//! the first time.  However, they are triggered at every method call and it can
+//! be interesting to use lighter metrics (e.g
+//! [`HitCount`](common/struct.HitCount.html)) in hot code paths and favour
+//! heavier metrics ([`Throughput`](common/struct.Throughput.html),
+//! [`ResponseTime`](common/struct.ResponseTime.html)) in higher-level entry
+//! points.
 //!
-//! If a metric you need is missing, or if you want to customize a metric (for instance, to track how many times a specific error occurs, or react depending on your return type), it is possible to implement your own metrics simply by implementing the [`Metric`](metric/trait.Metric.html) trait .
+//! If a metric you need is missing, or if you want to customize a metric (for
+//! instance, to track how many times a specific error occurs, or react
+//! depending on your return type), it is possible to implement your own metrics
+//! simply by implementing the [`Metric`](metric/trait.Metric.html) trait .
 //!
-//! Metered does not use statics or shared global state. Instead, it lets you either build your own metric registry using the metrics you need, or can generate a metric registry for you using method attributes. Metered will generate one registry per `impl` block annotated with the `metered` attribute, under the name provided as the `registry` parameter. By default, Metered will expect the registry to be accessed as `self.metrics` but the expression can be overridden with the `registry_expr` attribute parameter. See the demos for more examples.
+//! Metered does not use statics or shared global state. Instead, it lets you
+//! either build your own metric registry using the metrics you need, or can
+//! generate a metric registry for you using method attributes. Metered will
+//! generate one registry per `impl` block annotated with the `metered`
+//! attribute, under the name provided as the `registry` parameter. By default,
+//! Metered will expect the registry to be accessed as `self.metrics` but the
+//! expression can be overridden with the `registry_expr` attribute parameter.
+//! See the demos for more examples.
 //!
-//! Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
+//! Metered will generate metric registries that derive `Debug` and
+//! `serde::Serialize` to extract your metrics easily. Metered generates one
+//! sub-registry per method annotated with the `measure` attribute, hence
+//! organizing metrics hierarchically. This ensures access time to metrics in
+//! generated registries is always constant (and, when possible,
+//! cache-friendly), without any overhead other than the metric itself.
 //!
-//! Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, [`ResponseTime`](common/struct.ResponseTime.html) will return the completion time across `await`'ed invocations).
+//! Metered will happily measure any method, whether it is `async` or not, and
+//! the metrics will work as expected (e.g,
+//! [`ResponseTime`](common/struct.ResponseTime.html) will return the completion
+//! time across `await`'ed invocations).
 //!
-//! Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
+//! Right now, Metered does not provide bridges to external metric storage or
+//! monitoring systems. Such support is planned in separate modules
+//! (contributions welcome!).
 //!
 //! ## Example using procedural macros (recommended)
 //!
@@ -49,11 +90,24 @@
 //! # }
 //! ```
 //!
-//! In the snippet above, we will measure the [`HitCount`](common/struct.HitCount.html) and [`Throughput`](common/struct.Throughput.html) of the `biz` method.
+//! In the snippet above, we will measure the
+//! [`HitCount`](common/struct.HitCount.html) and
+//! [`Throughput`](common/struct.Throughput.html) of the `biz` method.
 //!
-//! This works by first annotating the `impl` block with the `metered` annotation and specifying the name Metered should give to the metric registry (here `BizMetrics`). Later, Metered will assume the expression to access that repository is `self.metrics`, hence we need a `metrics` field with the `BizMetrics` type in `Biz`. It would be possible to use another field name by specificying another registry expression, such as `#[metered(registry = BizMetrics, registry_expr = self.my_custom_metrics)]`.
+//! This works by first annotating the `impl` block with the `metered`
+//! annotation and specifying the name Metered should give to the metric
+//! registry (here `BizMetrics`). Later, Metered will assume the expression to
+//! access that repository is `self.metrics`, hence we need a `metrics` field
+//! with the `BizMetrics` type in `Biz`. It would be possible to use another
+//! field name by specificying another registry expression, such as
+//! `#[metered(registry = BizMetrics, registry_expr = self.my_custom_metrics)]`.
 //!
-//! Then, we must annotate which methods we wish to measure using the `measure` attribute, specifying the metrics we wish to apply: the metrics here are simply types of structures implementing the `Metric` trait, and you can define your own. Since there is no magic, we must ensure `self.metrics` can be accessed, and this will only work on methods with a `&self` or `&mut self` receiver.
+//! Then, we must annotate which methods we wish to measure using the `measure`
+//! attribute, specifying the metrics we wish to apply: the metrics here are
+//! simply types of structures implementing the `Metric` trait, and you can
+//! define your own. Since there is no magic, we must ensure `self.metrics` can
+//! be accessed, and this will only work on methods with a `&self` or `&mut
+//! self` receiver.
 //!
 //! ## Example of manually using metrics
 //!
@@ -81,7 +135,8 @@
 //! }
 //! ```
 //!
-//! The code above shows how different metrics compose, and in general the kind of boilerplate generated by the `#[metered]` procedural macro.
+//! The code above shows how different metrics compose, and in general the kind
+//! of boilerplate generated by the `#[metered]` procedural macro.
 
 #![deny(missing_docs)]
 #![deny(warnings)]
@@ -98,7 +153,8 @@ pub mod time_source;
 pub use common::{ErrorCount, HitCount, InFlight, ResponseTime, Throughput};
 pub use metered_macro::metered;
 
-/// Re-export this type so 3rd-party crates don't need to depend on the `aspect-rs` crate.
+/// Re-export this type so 3rd-party crates don't need to depend on the
+/// `aspect-rs` crate.
 pub use aspect::Enter;
 
 /// The `measure!` macro takes a reference to a metric and an expression.

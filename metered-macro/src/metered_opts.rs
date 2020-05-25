@@ -1,10 +1,11 @@
 //! The module supporting #[metered] options
 
-use syn::parse::{Parse, ParseStream};
-use syn::Result;
+use syn::{
+    parse::{Parse, ParseStream},
+    Result,
+};
 
-use synattra::types::KVOption;
-use synattra::*;
+use synattra::{types::KVOption, *};
 
 use std::borrow::Cow;
 

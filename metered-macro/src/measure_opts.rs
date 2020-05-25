@@ -1,11 +1,14 @@
 //! The module supporting #[measure] options
 
-use syn::parse::{Parse, ParseStream};
-use syn::Result;
+use syn::{
+    parse::{Parse, ParseStream},
+    Result,
+};
 
-use synattra::types::extra::InvokePath;
-use synattra::types::{KVOption, MultipleVal};
-use synattra::ParseStreamExt;
+use synattra::{
+    types::{extra::InvokePath, KVOption, MultipleVal},
+    ParseStreamExt,
+};
 
 pub struct MeasureRequest<'a> {
     pub tpe: &'a syn::TypePath,

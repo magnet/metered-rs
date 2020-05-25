@@ -10,6 +10,4 @@ pub use error_count::ErrorCount;
 pub use hit_count::HitCount;
 pub use in_flight::InFlight;
 pub use response_time::ResponseTime;
-pub use throughput::Throughput;
-pub use throughput::AtomicTxPerSec;
-pub use throughput::TxPerSec;
+pub use throughput::{AtomicTxPerSec, Throughput, TxPerSec};
