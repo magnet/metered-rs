@@ -1,6 +1,6 @@
 [package]
 name = "metered-macro"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 license = "Apache-2.0 OR MIT"
 readme = "../README.md"
@@ -14,12 +14,12 @@ edition = "2018"
 
 [dependencies]
 syn = {version= "1.0", features = ["full"] }
-aspect-weave = "0.2.0"
-synattra = "0.2.0"
+aspect-weave = "0.2"
+synattra = "0.2"
 quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.3"
-indexmap = "1.1"
+indexmap = "1.3"
 
 
 
