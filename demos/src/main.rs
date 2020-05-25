@@ -1,3 +1,4 @@
+use metered::clear::Clear;
 use metered::*;
 mod baz;
 use baz::Baz;
@@ -32,6 +33,16 @@ fn sync_procmacro_demo(baz: &Baz) {
     }
 }
 
+async fn async_procmacro_demo(baz: Baz) {
+    for i in 1..=5 {
+        let _ = baz.baz(i % 3 == 0).await;
+    }
+
+    // Print the results!
+    let serialized = serde_yaml::to_string(&baz).unwrap();
+    println!("{}", serialized);
+}
+
 fn simple_api_demo() {
     let metrics = TestMetrics::default();
 
@@ -42,10 +53,8 @@ fn simple_api_demo() {
     println!("{}", serialized);
 }
 
-use std::thread;
 use std::sync::Arc;
-
-use metered::clear::Clear;
+use std::thread;
 
 fn test_biz() {
     println!("Running Biz throughput demo...(will take 20 seconds)");
@@ -84,4 +93,6 @@ fn main() {
     let baz = Baz::default();
 
     sync_procmacro_demo(&baz);
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async_procmacro_demo(baz));
 }

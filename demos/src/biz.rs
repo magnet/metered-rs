@@ -14,5 +14,4 @@ impl Biz {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
         std::thread::sleep(delay);
     }
-
 }

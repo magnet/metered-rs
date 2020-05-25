@@ -25,6 +25,20 @@ Metered is built with the following principles in mind:
 
 ## Changelog
 
+* 0.4.0:
+  * Add allow(missing_docs) to generated structs (This allows to use metered structs in Rust code with lint level warn(missing_docs) or even deny(missing_docs)) (contributed by [@reyk](https://github.com/reyk))
+  * Implement `Clear` for generated registries (contributed by [@eliaslevy](https://github.com/eliaslevy))
+  * Implement `Histogram` and `Clear` for `RefCell<HdrHistogram>` (contributed by [@eliaslevy](https://github.com/eliaslevy))
+  * Introduce an `Instant` with microsecond precision (contributed by [@eliaslevy](https://github.com/eliaslevy))
+     * API breaking change: `Instant.elapsed_millis` is renamed to `elapsed_time`, and a new associated constant, `ONE_SEC` is introduced to specify one second in the instant units.
+  * Make `AtomicTxPerSec` and `TxPerSec` visible by reexporting  (contributed by [@eliaslevy](https://github.com/eliaslevy))
+  * Add `StdInstant` as the default type parameter for `T: Instant` in `TxPerSec`  (contributed by [@eliaslevy](https://github.com/eliaslevy))
+  * Modify HdrHistogram to work with serde_prometheus (contributed by [@w4](https://github.com/w4))
+     * To be used with [serde_prometheus](https://github.com/w4/serde_prometheus) and any HTTP server.
+  * Bumped dependencies:
+     * `indexmap`: 1.1 -> 1.3 
+     * `hdrhistogram`: 6.3 -> 7.1 
+     * `parking_lot`: 0.9 -> 0.10  
 * 0.3.0:
   * Fix to preserve span in `async` measured methods.
   * Update nightly sample for new syntax and Tokio 0.2-alpha (using std futures, will need Rust >= 1.39, nightly or not)

@@ -44,9 +44,7 @@ impl Baz {
     #[measure([ErrorCount, ResponseTime])]
     pub async fn baz(&self, should_fail: bool) -> Result<(), &'static str> {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
-
-        let when = std::time::Instant::now() + delay;
-        tokio::timer::Delay::new(when).await;
+        tokio::time::delay_for(delay).await;
         if !should_fail {
             println!("baz !");
             Ok(())
@@ -62,9 +60,7 @@ impl Baz {
     ) -> impl std::future::Future<Output = Result<(), &'static str>> {
         async move {
             let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
-
-            let when = std::time::Instant::now() + delay;
-            tokio::timer::Delay::new(when).await;
+            tokio::time::delay_for(delay).await;
             if !should_fail {
                 println!("baz !");
                 Ok(())
