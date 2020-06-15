@@ -26,7 +26,7 @@ use serde::Serialize;
 /// using a `std::cell:Cell<u64>` instead.
 
 #[derive(Clone, Default, Debug, Serialize)]
-pub struct InFlight<G: Gauge = AtomicInt<u64>>(G);
+pub struct InFlight<G: Gauge = AtomicInt<u64>>(pub G);
 
 impl<G: Gauge, R> Metric<R> for InFlight<G> {}
 

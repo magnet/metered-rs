@@ -10,6 +10,13 @@ pub struct AtomicHdrHistogram {
     inner: Mutex<HdrHistogram>,
 }
 
+impl AtomicHdrHistogram {
+    /// Returns a cloned snapshot of the inner histogram.
+    pub fn histogram(&self) -> HdrHistogram {
+        self.inner.lock().clone()
+    }
+}
+
 impl Histogram for AtomicHdrHistogram {
     fn with_bound(max_bound: u64) -> Self {
         let histo = HdrHistogram::with_bound(max_bound);
@@ -53,6 +60,7 @@ impl Debug for AtomicHdrHistogram {
 /// HdrHistograms can record and analyze sampled data in low-latency applications. Read more about HDR Histograms on [http://hdrhistogram.org/](http://hdrhistogram.org/)
 ///
 /// This structure uses the `hdrhistogram` crate under the hood.
+#[derive(Clone)]
 pub struct HdrHistogram {
     histo: hdrhistogram::Histogram<u64>,
 }
@@ -81,6 +89,54 @@ impl HdrHistogram {
     /// Clears the values of the histogram
     pub fn clear(&mut self) {
         self.histo.reset();
+    }
+
+    /// Get the lowest recorded value level in the histogram.
+    /// If the histogram has no recorded values, the value returned will be 0.
+    pub fn min(&self) -> u64 {
+        self.histo.min()
+    }
+
+    /// Get the highest recorded value level in the histogram.
+    /// If the histogram has no recorded values, the value returned is undefined.
+    pub fn max(&self) -> u64 {
+        self.histo.max()
+    }
+
+    /// Get the computed mean value of all recorded values in the histogram.
+    pub fn mean(&self) -> f64 {
+        self.histo.mean()
+    }
+
+    /// Get the computed standard deviation of all recorded
+    /// values in the histogram
+    pub fn stdev(&self) -> f64 {
+        self.histo.stdev()
+    }
+
+    /// Get the value at the 90% quantile.
+    pub fn p90(&self) -> u64 {
+        self.histo.value_at_quantile(0.9)
+    }
+
+    /// Get the value at the 95% quantile.
+    pub fn p95(&self) -> u64 {
+        self.histo.value_at_quantile(0.95)
+    }
+
+    /// Get the value at the 99% quantile.
+    pub fn p99(&self) -> u64 {
+        self.histo.value_at_quantile(0.99)
+    }
+
+    /// Get the value at the 99.9% quantile.
+    pub fn p999(&self) -> u64 {
+        self.histo.value_at_quantile(0.999)
+    }
+
+    /// Get the value at the 99.99% quantile.
+    pub fn p9999(&self) -> u64 {
+        self.histo.value_at_quantile(0.999)
     }
 }
 
@@ -147,7 +203,7 @@ impl Debug for HdrHistogram {
         let ile = |v| hdr.value_at_percentile(v);
         write!(
             f,
-            "HdrHistogram {{ 
+            "HdrHistogram {{
             samples: {}, min: {}, max: {}, mean: {}, stdev: {},
             90%ile = {}, 95%ile = {}, 99%ile = {}, 99.9%ile = {}, 99.99%ile = {} }}",
             hdr.len(),

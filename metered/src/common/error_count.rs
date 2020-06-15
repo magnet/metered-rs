@@ -17,7 +17,7 @@ use serde::Serialize;
 /// in multithread scenarios. Non-threaded applications can gain performance by
 /// using a `std::cell:Cell<u64>` instead.
 #[derive(Clone, Default, Debug, Serialize)]
-pub struct ErrorCount<C: Counter = AtomicInt<u64>>(C);
+pub struct ErrorCount<C: Counter = AtomicInt<u64>>(pub C);
 
 impl<C: Counter, T, E> Metric<Result<T, E>> for ErrorCount<C> {}
 

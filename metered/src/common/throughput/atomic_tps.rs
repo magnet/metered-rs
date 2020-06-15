@@ -1,6 +1,7 @@
 use super::{tx_per_sec::TxPerSec, RecordThroughput};
 use crate::{
     clear::Clear,
+    hdr_histogram::HdrHistogram,
     time_source::{Instant, StdInstant},
 };
 use parking_lot::Mutex;
@@ -10,6 +11,13 @@ use serde::{Serialize, Serializer};
 /// `TxPerSec`.
 pub struct AtomicTxPerSec<T: Instant = StdInstant> {
     inner: Mutex<TxPerSec<T>>,
+}
+
+impl<T: Instant> AtomicTxPerSec<T> {
+    /// Returns a cloned snapshot of the inner histogram.
+    pub fn histogram(&self) -> HdrHistogram {
+        self.inner.lock().hdr_histogram.clone()
+    }
 }
 
 impl<T: Instant> RecordThroughput for AtomicTxPerSec<T> {
