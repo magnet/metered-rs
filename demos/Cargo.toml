@@ -14,5 +14,5 @@ rand = "0.7"
 atomic = "0.4"
 tokio = { version = "0.2", features = [ "time" ] }
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.8"
-
+serde_prometheus = "0.1"
+thiserror = "1.0"

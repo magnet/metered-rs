@@ -11,6 +11,8 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
+mod error_count;
+mod error_count_opts;
 mod measure_opts;
 mod metered;
 mod metered_opts;
@@ -19,10 +21,7 @@ use proc_macro::TokenStream;
 
 /// A procedural macro that generates a metric registry for an `impl` block.
 ///
-/// ``` ignore
-/// # extern crate metered;
-/// # extern crate rand;
-///
+/// ```
 /// use metered::{metered, Throughput, HitCount};
 ///
 /// #[derive(Default, Debug)]
@@ -38,9 +37,10 @@ use proc_macro::TokenStream;
 ///         std::thread::sleep(delay);
 ///     }   
 /// }
-///
-/// # fn main() {
-/// # }
+/// #
+/// # let biz = Biz::default();
+/// # biz.biz();
+/// # assert_eq!(biz.metrics.biz.hit_count.0.get(), 1);
 /// ```
 ///
 /// ### The `metered` attribute
@@ -86,4 +86,56 @@ use proc_macro::TokenStream;
 #[proc_macro_attribute]
 pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
     metered::metered(attrs, item).unwrap_or_else(|e| TokenStream::from(e.to_compile_error()))
+}
+
+/// A procedural macro that generates a new metric that measures the amount
+/// of times each variant of an error has been thrown, to be used as crate-specific
+/// replacement for `metered::ErrorCount`.
+///
+/// ```
+/// # use metered_macro::{metered, error_count};
+/// # use thiserror::Error;
+/// #
+/// #[error_count(name = ErrorCount, visibility = pub)]
+/// #[derive(Debug, Error)]
+/// pub enum Error {
+/// #   #[error("read error")]
+///     ReadError,
+/// #   #[error("init error")]
+///     InitError,
+/// }
+///
+/// #[derive(Default, Debug)]
+/// pub struct Baz {
+///     metrics: BazMetrics,
+/// }
+///
+/// #[metered(registry = BazMetrics)]
+/// impl Baz {
+///     #[measure(ErrorCount)]
+///     pub fn biz(&self) -> Result<(), Error> {        
+///         Err(Error::InitError)
+///     }   
+/// }
+///
+/// let baz = Baz::default();
+/// baz.biz();
+/// assert_eq!(baz.metrics.biz.error_count.read_error.get(), 0);
+/// assert_eq!(baz.metrics.biz.error_count.init_error.get(), 1);
+/// ```
+///
+/// - `name` is required and must be a valid Rust ident, this is the name
+///   of the generated struct containing a counter for each enum variant.
+/// - `visibility` specifies to visibility of the generated struct, it
+///   defaults to `pub(crate)`.
+///
+/// The `error_count` macro may only be applied to any enums that have a
+/// `std::error::Error` impl. The generated struct may then be included
+/// in `measure` attributes to measure the amount of errors returned of
+/// each variant defined in your error enum.
+
+#[proc_macro_attribute]
+pub fn error_count(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    error_count::error_count(attrs, item)
+        .unwrap_or_else(|e| TokenStream::from(e.to_compile_error()))
 }
