@@ -56,7 +56,7 @@ impl<P: RecordThroughput + Clear, T: Instant> Clear for Throughput<T, P> {
 }
 
 impl<P: RecordThroughput + Serialize, T: Instant, R> OnResult<R> for Throughput<T, P> {
-    fn on_result(&self, _enter: (), _: &R) -> Advice {
+    fn leave_scope(&self, _enter: ()) -> Advice {
         self.0.on_result();
         Advice::Return
     }

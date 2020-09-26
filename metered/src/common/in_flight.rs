@@ -38,7 +38,7 @@ impl<G: Gauge> Enter for InFlight<G> {
 }
 
 impl<G: Gauge, R> OnResult<R> for InFlight<G> {
-    fn on_result(&self, _: (), _: &R) -> Advice {
+    fn leave_scope(&self, _: ()) -> Advice {
         self.0.decr();
         Advice::Return
     }

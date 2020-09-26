@@ -8,10 +8,10 @@ edition = "2018"
 [workspace]
 
 [dependencies]
-metered = { version = "0.4", path = "../metered" }
+metered = { version = "0.5", path = "../metered" }
 hdrhistogram = "7.1"
 rand = "0.7"
-atomic = "0.4"
+atomic = "0.5"
 tokio = { version = "0.2", features = [ "time" ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_prometheus = "0.1"

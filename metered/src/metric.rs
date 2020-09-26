@@ -4,6 +4,7 @@ use crate::clear::Clear;
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
 pub use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
+use std::marker::PhantomData;
 
 /// A trait to implement to be used in the `measure!` macro
 ///
@@ -17,6 +18,43 @@ pub trait Metric<R>: Default + OnResult<R> + Clear + Serialize {}
 #[doc(hidden)]
 pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, _result: &R) -> Advice {
     metric.on_result(_enter, _result)
+}
+/// Handles a metric's lifecycle, guarding against early returns and panics.
+pub struct ExitGuard<'a, R, M: Metric<R>> {
+    metric: &'a M,
+    enter: Option<<M as Enter>::E>,
+    _phantom: PhantomData<R>,
+}
+
+impl<'a, R, M: Metric<R>> ExitGuard<'a, R, M> {
+    /// Enter a metric and create the guard for its exit.
+    /// This calls aspect::Enter::enter on the metric internally.
+    pub fn new(metric: &'a M) -> Self {
+        Self {
+            metric,
+            enter: Some(metric.enter()),
+            _phantom: PhantomData,
+        }
+    }
+
+    /// If no unexpected exit occurred, record the expression's result.
+    pub fn on_result(mut self, result: &R) {
+        if let Some(enter) = self.enter.take() {
+            self.metric.on_result(enter, result);
+        } else {
+            // OnResult called twice - we ignore
+        }
+    }
+}
+
+impl<'a, R, M: Metric<R>> Drop for ExitGuard<'a, R, M> {
+    fn drop(&mut self) {
+        if let Some(enter) = self.enter.take() {
+            self.metric.leave_scope(enter);
+        } else {
+            // on_result was called, so the result was already recorded
+        }
+    }
 }
 
 /// A trait for Counters

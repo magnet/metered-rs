@@ -30,7 +30,7 @@ impl<C: Counter, T, E> OnResult<Result<T, E>> for ErrorCount<C> {
     fn on_result(&self, _: (), r: &Result<T, E>) -> Advice {
         if r.is_err() {
             self.0.incr();
-        };
+        }
         Advice::Return
     }
 }

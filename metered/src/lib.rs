@@ -162,12 +162,12 @@ pub use aspect::Enter;
 /// It applies the metric and the expression is returned unchanged.
 #[macro_export]
 macro_rules! measure {
-    ($metric:ident, $e:expr) => {{
-        let _metric = $metric;
-        let _enter = $crate::Enter::enter(_metric);
-        let _result = $e;
-        $crate::metric::on_result(_metric, _enter, &_result);
-        _result
+    ($metric:expr, $e:expr) => {{
+        let metric = $metric;
+        let guard = $crate::metric::ExitGuard::new(metric);
+        let result = $e;
+        guard.on_result(&result);
+        result
     }};
 }
 
