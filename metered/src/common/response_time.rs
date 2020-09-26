@@ -22,7 +22,7 @@ use serde::{Serialize, Serializer};
 /// instead.
 #[derive(Clone)]
 pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInstant>(
-    H,
+    pub H,
     std::marker::PhantomData<T>,
 );
 

@@ -9,7 +9,8 @@ use serde::{Serialize, Serializer};
 /// Non-thread safe implementation of `RecordThroughput`. Use as
 /// `RefCell<TxPerSec<T>>`.
 pub struct TxPerSec<T: Instant = StdInstant> {
-    hdr_histogram: HdrHistogram,
+    /// The inner histogram
+    pub hdr_histogram: HdrHistogram,
     last: Option<T>,
     count: u64,
     time_source: std::marker::PhantomData<T>,
