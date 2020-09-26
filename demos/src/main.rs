@@ -4,6 +4,7 @@ mod baz;
 use baz::Baz;
 mod biz;
 use biz::Biz;
+use std::collections::HashMap;
 
 #[derive(Default, Debug, serde::Serialize)]
 struct TestMetrics {
@@ -36,10 +37,11 @@ fn sync_procmacro_demo(baz: &Baz) {
 async fn async_procmacro_demo(baz: Baz) {
     for i in 1..=5 {
         let _ = baz.baz(i % 3 == 0).await;
+        let _ = baz.bazle(i % 3 == 0).await;
     }
 
     // Print the results!
-    let serialized = serde_yaml::to_string(&baz).unwrap();
+    let serialized = serde_prometheus::to_string(&baz, None, HashMap::new()).unwrap();
     println!("{}", serialized);
 }
 
@@ -49,7 +51,7 @@ fn simple_api_demo() {
     let _ = test(false, &metrics);
     let _ = test(true, &metrics);
     // Print the results!
-    let serialized = serde_yaml::to_string(&metrics).unwrap();
+    let serialized = serde_prometheus::to_string(&metrics, None, HashMap::new()).unwrap();
     println!("{}", serialized);
 }
 
@@ -81,7 +83,7 @@ fn do_test_biz(biz: &Arc<Biz>) {
     }
     println!("Running Biz throughput demo... done! Here are the metrics for that run:");
     // Print the results!
-    let serialized = serde_yaml::to_string(&**biz).unwrap();
+    let serialized = serde_prometheus::to_string(&**biz, None, HashMap::new()).unwrap();
     println!("{}", serialized);
 }
 

@@ -1,6 +1,16 @@
 #![allow(dead_code)]
 
 use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
+use thiserror::Error;
+
+#[metered::error_count(name = BazErrorCount)]
+#[derive(Debug, Error)]
+pub enum BazError {
+    #[error("I failed!")]
+    Failure,
+    #[error("Bad input")]
+    BadInput,
+}
 
 #[derive(Default, Debug, serde::Serialize)]
 pub struct Baz {
@@ -30,7 +40,7 @@ impl Baz {
         std::thread::sleep(delay);
     }
 
-    #[measure(type = HitCount<metered::atomic::AtomicInt<u128>>)]
+    #[measure(type = HitCount<metered::atomic::AtomicInt<u64>>)]
     #[measure(ErrorCount)]
     #[measure(ResponseTime)]
     pub fn bar(&self, should_fail: bool) -> Result<(), &'static str> {
@@ -67,6 +77,16 @@ impl Baz {
             } else {
                 Err("I failed!")
             }
+        }
+    }
+
+    #[measure([HitCount, BazErrorCount])]
+    pub async fn bazle(&self, should_fail: bool) -> Result<(), BazError> {
+        if !should_fail {
+            println!("bazle !");
+            Ok(())
+        } else {
+            Err(BazError::Failure)
         }
     }
 
