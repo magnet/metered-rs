@@ -96,13 +96,20 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # use metered_macro::{metered, error_count};
 /// # use thiserror::Error;
 /// #
-/// #[error_count(name = ErrorCount, visibility = pub)]
+/// #[error_count(name = LibErrorCount, visibility = pub)]
 /// #[derive(Debug, Error)]
-/// pub enum Error {
+/// pub enum LibError {
 /// #   #[error("read error")]
 ///     ReadError,
 /// #   #[error("init error")]
 ///     InitError,
+/// }
+///
+/// #[error_count(name = ErrorCount, visibility = pub)]
+/// #[derive(Debug, Error)]
+/// pub enum Error {
+/// #   #[error("error from lib: {0}")]
+///     MyLibrary(#[from] #[nested] LibError),
 /// }
 ///
 /// #[derive(Default, Debug)]
@@ -114,14 +121,14 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// impl Baz {
 ///     #[measure(ErrorCount)]
 ///     pub fn biz(&self) -> Result<(), Error> {        
-///         Err(Error::InitError)
+///         Err(LibError::InitError.into())
 ///     }   
 /// }
 ///
 /// let baz = Baz::default();
 /// baz.biz();
-/// assert_eq!(baz.metrics.biz.error_count.read_error.get(), 0);
-/// assert_eq!(baz.metrics.biz.error_count.init_error.get(), 1);
+/// assert_eq!(baz.metrics.biz.error_count.my_library.read_error.get(), 0);
+/// assert_eq!(baz.metrics.biz.error_count.my_library.init_error.get(), 1);
 /// ```
 ///
 /// - `name` is required and must be a valid Rust ident, this is the name
