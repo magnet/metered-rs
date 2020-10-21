@@ -177,5 +177,12 @@ pub fn error_variant_serializer<S: serde::Serializer, T: serde::Serialize>(
     value: &T,
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
-    serializer.serialize_newtype_struct("!|variant==<", value)
+    serializer.serialize_newtype_struct("!|variant[::]==<", value)
+}
+
+/// Trait applied to error enums by `#[metered::error_count]` to identify generated error
+/// count structs.
+pub trait ErrorBreakdown<C: metric::Counter> {
+    /// The generated error count struct.
+    type ErrorCount;
 }

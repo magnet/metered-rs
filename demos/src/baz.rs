@@ -3,13 +3,22 @@
 use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
 use thiserror::Error;
 
-#[metered::error_count(name = BazErrorCount)]
+#[metered::error_count(name = LibErrorCount, visibility = pub)]
 #[derive(Debug, Error)]
-pub enum BazError {
+pub enum LibError {
     #[error("I failed!")]
     Failure,
     #[error("Bad input")]
     BadInput,
+}
+
+#[metered::error_count(name = BazErrorCount, visibility = pub)]
+#[derive(Debug, Error)]
+pub enum BazError {
+    #[error("lib error: {0}")]
+    Lib(#[from] #[nested] LibError),
+    #[error("io error")]
+    Io,
 }
 
 #[derive(Default, Debug, serde::Serialize)]
@@ -86,7 +95,7 @@ impl Baz {
             println!("bazle !");
             Ok(())
         } else {
-            Err(BazError::Failure)
+            Err(LibError::Failure.into())
         }
     }
 
