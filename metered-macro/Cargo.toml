@@ -27,8 +27,10 @@ metered = { path = "../metered" }
 thiserror = "1.0"
 rand = "0.7"
 
-
-
+[features]
+# When enabled, the error count macro will skip serializing cleared entries (e.g counters with value 0)
+# This can be overridden with the `skip_cleared` macro attribute
+error-count-skip-cleared-by-default = []
 
 [lib]
 proc-macro = true

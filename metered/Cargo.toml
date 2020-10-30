@@ -29,3 +29,8 @@ default = []
 
 # Use the serde feature to make metered' types implement Serialize
 serialize = []
+
+# When enabled, the error count macro will skip serializing cleared entries (e.g counters with value 0)
+# This can be overridden with the `skip_cleared` macro attribute
+error-count-skip-cleared-by-default = ["metered-macro/error-count-skip-cleared-by-default"]
+

@@ -12,6 +12,7 @@ use std::borrow::Cow;
 pub struct ErrorCountOpts<'a> {
     pub name_ident: &'a syn::Ident,
     pub visibility: Cow<'a, syn::Visibility>,
+    pub skip_cleared: bool,
 }
 
 pub struct ErrorCountKeyValAttribute {
@@ -83,9 +84,24 @@ impl ErrorCountKeyValAttribute {
                 Cow::Owned(syn::parse_str::<syn::Visibility>("pub(crate)").unwrap())
             });
 
+        let skip_cleared = self
+            .values
+            .iter()
+            .filter_map(|opt| {
+                if let ErrorCountOption::SkipCleared(tpe) = opt {
+                    Some(&tpe.value)
+                } else {
+                    None
+                }
+            })
+            .next()
+            .map(|value| value.value)
+            .unwrap_or(cfg!(feature = "error-count-skip-cleared-by-default"));
+
         ErrorCountOpts {
             name_ident,
             visibility,
+            skip_cleared,
         }
     }
 }
@@ -105,16 +121,20 @@ impl Parse for ErrorCountKeyValAttribute {
 mod kw {
     syn::custom_keyword!(name);
     syn::custom_keyword!(visibility);
+    syn::custom_keyword!(skip_cleared);
 }
 
 pub type ErrorCountNameOption = KVOption<kw::name, syn::Ident>;
 
 pub type ErrorCountVisibilityOption = KVOption<kw::visibility, syn::Visibility>;
 
+pub type ErrorCountSkipClearedOption = KVOption<kw::skip_cleared, syn::LitBool>;
+
 #[allow(clippy::large_enum_variant)]
 pub enum ErrorCountOption {
     Name(ErrorCountNameOption),
     Visibility(ErrorCountVisibilityOption),
+    SkipCleared(ErrorCountSkipClearedOption),
 }
 
 impl ErrorCountOption {
@@ -123,6 +143,7 @@ impl ErrorCountOption {
         match self {
             ErrorCountOption::Name(_) => <kw::name>::display(),
             ErrorCountOption::Visibility(_) => <kw::visibility>::display(),
+            ErrorCountOption::SkipCleared(_) => <kw::skip_cleared>::display(),
         }
     }
 }
@@ -133,6 +154,8 @@ impl Parse for ErrorCountOption {
             Ok(input.parse_as(ErrorCountOption::Name)?)
         } else if ErrorCountVisibilityOption::peek(input) {
             Ok(input.parse_as(ErrorCountOption::Visibility)?)
+        } else if ErrorCountSkipClearedOption::peek(input) {
+            Ok(input.parse_as(ErrorCountOption::SkipCleared)?)
         } else {
             let err = format!("invalid error_count option: {}", input);
             Err(input.error(err))
