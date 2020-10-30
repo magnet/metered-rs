@@ -3,7 +3,7 @@
 use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
 use thiserror::Error;
 
-#[metered::error_count(name = LibErrorCount, visibility = pub)]
+#[metered::error_count(name = LibErrorCount, visibility = pub, skip_cleared = false)]
 #[derive(Debug, Error)]
 pub enum LibError {
     #[error("I failed!")]
@@ -12,7 +12,7 @@ pub enum LibError {
     BadInput,
 }
 
-#[metered::error_count(name = BazErrorCount, visibility = pub)]
+#[metered::error_count(name = BazErrorCount, visibility = pub, skip_cleared = true)]
 #[derive(Debug, Error)]
 pub enum BazError {
     #[error("lib error: {0}")]

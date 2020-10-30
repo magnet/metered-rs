@@ -29,3 +29,6 @@ default = []
 
 # Use the serde feature to make metered' types implement Serialize
 serialize = []
+
+error-count-default-ignore-zero = ["metered-macro/error-count-default-ignore-zero"]
+

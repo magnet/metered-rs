@@ -1,6 +1,6 @@
 //! A module defining the `Metric` trait and common metric backends.
 
-use crate::clear::Clear;
+use crate::clear::{Clear, Clearable};
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
 pub use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
@@ -58,7 +58,7 @@ impl<'a, R, M: Metric<R>> Drop for ExitGuard<'a, R, M> {
 }
 
 /// A trait for Counters
-pub trait Counter: Default + Clear + Serialize {
+pub trait Counter: Default + Clear + Clearable + Serialize {
     /// Increment the counter
     fn incr(&self);
 }

@@ -27,8 +27,8 @@ metered = { path = "../metered" }
 thiserror = "1.0"
 rand = "0.7"
 
-
-
+[features]
+error-count-default-ignore-zero = []
 
 [lib]
 proc-macro = true
