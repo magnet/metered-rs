@@ -135,6 +135,12 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///   of the generated struct containing a counter for each enum variant.
 /// - `visibility` specifies to visibility of the generated struct, it
 ///   defaults to `pub(crate)`.
+/// - `skip_cleared` allows to make the serializer skip "cleared" entries,
+///    that is entries for which the `Clearable::is_cleared` function
+///    returns true (for counters, by default, whether they are 0). It defaults
+///    to whether the feature `error-count-skip-cleared-by-default` is enabled.
+///    By default, this feature is disabled, and no entry will be skipped.
+///
 ///
 /// The `error_count` macro may only be applied to any enums that have a
 /// `std::error::Error` impl. The generated struct may then be included

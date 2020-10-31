@@ -96,6 +96,15 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
                 }
             });
 
+    let skip_cleared = attrs.skip_cleared;
+    let serializer = nested_attrs.iter().map(|(_, nested_attr)| {
+        if skip_cleared && nested_attr.is_none() {
+            quote!("metered::error_variant_serializer_skip_cleared")
+        } else {
+            quote!("metered::error_variant_serializer")
+        }
+    });
+
     Ok(quote! {
         #input
 
@@ -106,7 +115,7 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             __phantom: std::marker::PhantomData<C>,
             #(
                 #(#cfg_attrs)*
-                #[serde(rename = #stringified_variants, serialize_with = "metered::error_variant_serializer")]
+                #[serde(rename = #stringified_variants, serialize_with = #serializer)]
                 pub #snake_variants: #metric_type,
             )*
         }

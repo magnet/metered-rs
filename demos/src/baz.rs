@@ -12,7 +12,7 @@ pub enum LibError {
     BadInput,
 }
 
-#[metered::error_count(name = BazErrorCount, visibility = pub)]
+#[metered::error_count(name = BazErrorCount, visibility = pub, skip_cleared = true)]
 #[derive(Debug, Error)]
 pub enum BazError {
     #[error("lib error: {0}")]

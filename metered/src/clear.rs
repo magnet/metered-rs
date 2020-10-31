@@ -12,3 +12,10 @@ pub trait Clear {
     /// Requests to clear self.
     fn clear(&self);
 }
+
+/// The `Clearable` trait is used to provide metadata around some types that can
+/// be cleared.
+pub trait Clearable {
+    /// Returns true if self has been cleared and not yet been written to since.
+    fn is_cleared(&self) -> bool;
+}
