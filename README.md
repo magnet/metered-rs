@@ -18,13 +18,20 @@ Metered is built with the following principles in mind:
 
  * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.6.0/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.7.0/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
  Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
 
 
 ## Changelog
 
+* 0.7.0:
+  * Expose inner metric backend `Throughput` type (fixes issue #30)
+  * Implement `Deref` for all top-level metrics
+  * Expose inner metric backend `Throughput` type
+  * Add `skip_cleared` option to `error_count` attribute  (contributed by [@w4](https://github.com/w4))
+     * Introduce a new `Clearable` trait that exposes behavior for metrics that implement `Clear` (in an effort of backwards compatibility).  Currently only implemented on counters.
+     * Default behavior can be controlled by the a build-time feature, `error-count-skip-cleared-by-default`
 * 0.6.0:
   * Extend `error_count` macro to allow `nested` enum error variants to be reported, providing zero-cost error tracking for nested errors (contributed by [@w4](https://github.com/w4))
 * 0.5.0:
