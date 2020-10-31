@@ -10,7 +10,8 @@ use serde::{Serialize, Serializer};
 /// Thread-safe implementation of `RecordThroughput`. It uses a `Mutex` to wrap
 /// `TxPerSec`.
 pub struct AtomicTxPerSec<T: Instant = StdInstant> {
-    inner: Mutex<TxPerSec<T>>,
+    /// The inner mutex protecting the `TxPerSec` value holding the histogram
+    pub inner: Mutex<TxPerSec<T>>,
 }
 
 impl<T: Instant> AtomicTxPerSec<T> {

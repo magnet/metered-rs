@@ -7,6 +7,7 @@ use crate::{
 };
 use aspect::{Enter, OnResult};
 use serde::Serialize;
+use std::ops::Deref;
 
 /// A metric counting how many times an expression as been hit, before it
 /// returns.
@@ -33,5 +34,13 @@ impl<C: Counter, R> OnResult<R> for HitCount<C> {}
 impl<C: Counter> Clear for HitCount<C> {
     fn clear(&self) {
         self.0.clear()
+    }
+}
+
+impl<C: Counter> Deref for HitCount<C> {
+    type Target = C;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

@@ -8,6 +8,7 @@ use crate::{
 };
 use aspect::{Advice, Enter, OnResult};
 use serde::{Serialize, Serializer};
+use std::ops::Deref;
 
 /// A metric measuring the response time of an expression, that is the duration
 /// the expression needed to complete.
@@ -72,5 +73,13 @@ use std::{fmt, fmt::Debug};
 impl<H: Histogram + Debug, T: Instant> Debug for ResponseTime<H, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.0)
+    }
+}
+
+impl<H: Histogram, T: Instant> Deref for ResponseTime<H, T> {
+    type Target = H;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

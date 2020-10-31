@@ -7,6 +7,7 @@ use crate::{
 };
 use aspect::{Advice, Enter, OnResult};
 use serde::{Serialize, Serializer};
+use std::ops::Deref;
 
 mod atomic_tps;
 mod tx_per_sec;
@@ -27,7 +28,7 @@ pub use tx_per_sec::TxPerSec;
 /// structures instead.
 #[derive(Clone)]
 pub struct Throughput<T: Instant = StdInstant, P: RecordThroughput = AtomicTxPerSec<T>>(
-    P,
+    pub P,
     std::marker::PhantomData<T>,
 );
 
@@ -75,5 +76,13 @@ use std::{fmt, fmt::Debug};
 impl<P: RecordThroughput + Debug, T: Instant> Debug for Throughput<T, P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.0)
+    }
+}
+
+impl<P: RecordThroughput, T: Instant> Deref for Throughput<T, P> {
+    type Target = P;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

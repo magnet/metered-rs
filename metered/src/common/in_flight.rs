@@ -7,6 +7,7 @@ use crate::{
 };
 use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
+use std::ops::Deref;
 
 /// A metric providing an in-flight gauge, showing how many calls are currently
 /// active for an expression.
@@ -48,5 +49,13 @@ impl<G: Gauge> Clear for InFlight<G> {
     fn clear(&self) {
         // Do nothing: an InFlight metric
         // would get in an inconsistent state if cleared
+    }
+}
+
+impl<G: Gauge> Deref for InFlight<G> {
+    type Target = G;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

@@ -7,6 +7,7 @@ use crate::{
 };
 use aspect::{Advice, Enter, OnResult};
 use serde::Serialize;
+use std::ops::Deref;
 
 /// A metric counting how many times an expression typed std `Result` as
 /// returned an `Err` variant.
@@ -38,5 +39,13 @@ impl<C: Counter, T, E> OnResult<Result<T, E>> for ErrorCount<C> {
 impl<C: Counter> Clear for ErrorCount<C> {
     fn clear(&self) {
         self.0.clear()
+    }
+}
+
+impl<C: Counter> Deref for ErrorCount<C> {
+    type Target = C;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
