@@ -15,11 +15,11 @@ mod tx_per_sec;
 pub use atomic_tps::AtomicTxPerSec;
 pub use tx_per_sec::TxPerSec;
 
-/// A metric providing a transaction per second count backed by an histogram.
+/// A metric providing a transaction per second count backed by a histogram.
 ///
 /// Because it retrieves the current time before calling the expression, stores
-/// it to appropriatly build time windows of 1 second and registers results to
-/// an histogram, this is a rather heavy-weight metric better applied at
+/// it to appropriately build time windows of 1 second and registers results to
+/// a histogram, this is a rather heavy-weight metric better applied at
 /// entry-points.
 ///
 /// By default, `Throughput` uses an atomic transaction count backend and a
