@@ -187,7 +187,7 @@ The Hdr Histogram backing these statistics is able to give much more than fixed 
 
 `registry` is mandatory and must be a valid Rust ident.
 
-`registry_expr` defaults to `self.metrics`, alternate values must be a valid Rust expression. This setting lets you configure the expression which resolves to the registry. Please not that this triggers an immutable borrow of that expression.
+`registry_expr` defaults to `self.metrics`, alternate values must be a valid Rust expression. This setting lets you configure the expression which resolves to the registry. Please note that this triggers an immutable borrow of that expression.
 
 `visibility` defaults to `pub(crate)`, and must be a valid struct Rust visibility (e.g, `pub`, `<nothing>`, `pub(self)`, etc). This setting lets you alter the visibility of the generated registry `struct`s. The registry fields are always public and named after snake cased methods or metrics.
 
