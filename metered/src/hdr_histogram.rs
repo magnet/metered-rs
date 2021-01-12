@@ -136,7 +136,7 @@ impl HdrHistogram {
 
     /// Get the value at the 99.99% quantile.
     pub fn p9999(&self) -> u64 {
-        self.histo.value_at_quantile(0.999)
+        self.histo.value_at_quantile(0.9999)
     }
 }
 
