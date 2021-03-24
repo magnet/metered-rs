@@ -2,7 +2,7 @@
 
 use crate::clear::{Clear, Clearable};
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
-pub use aspect::{Advice, Enter, OnResult};
+pub use aspect::{Advice, OnResult, OnResultMut, Enter};
 use serde::Serialize;
 use std::marker::PhantomData;
 
@@ -12,11 +12,11 @@ use std::marker::PhantomData;
 ///
 /// The return type, R, of the expression can be captured to perform special
 /// handling.
-pub trait Metric<R>: Default + OnResult<R> + Clear + Serialize {}
+pub trait Metric<R>: Default + OnResultMut<R> + Clear + Serialize {}
 
 // Needed to force `measure!` to work only with the `Metric` trait.
 #[doc(hidden)]
-pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, _result: &R) -> Advice {
+pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, _result: &mut R) -> Advice {
     metric.on_result(_enter, _result)
 }
 /// Handles a metric's lifecycle, guarding against early returns and panics.
@@ -38,7 +38,7 @@ impl<'a, R, M: Metric<R>> ExitGuard<'a, R, M> {
     }
 
     /// If no unexpected exit occurred, record the expression's result.
-    pub fn on_result(mut self, result: &R) {
+    pub fn on_result(mut self, result: &mut R) {
         if let Some(enter) = self.enter.take() {
             self.metric.on_result(enter, result);
         } else {
