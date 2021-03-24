@@ -14,7 +14,7 @@ edition = "2018"
 
 [dependencies]
 metered-macro = { version = "0.7.0", path = "../metered-macro" }
-aspect = "0.2.1"
+aspect = "0.3"
 hdrhistogram = "7.1"
 atomic = "0.5"
 parking_lot = "0.11"

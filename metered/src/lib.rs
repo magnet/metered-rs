@@ -165,8 +165,8 @@ macro_rules! measure {
     ($metric:expr, $e:expr) => {{
         let metric = $metric;
         let guard = $crate::metric::ExitGuard::new(metric);
-        let result = $e;
-        guard.on_result(&result);
+        let mut result = $e;
+        guard.on_result(&mut result);
         result
     }};
 }
