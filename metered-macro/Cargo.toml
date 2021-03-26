@@ -1,6 +1,6 @@
 [package]
 name = "metered-macro"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 license = "Apache-2.0 OR MIT"
 readme = "../README.md"
@@ -25,7 +25,7 @@ indexmap = "1.6"
 serde = { version = "1.0", features = ["derive"] }
 metered = { path = "../metered" }
 thiserror = "1.0"
-rand = "0.7"
+rand = "0.8"
 
 [features]
 # When enabled, the error count macro will skip serializing cleared entries (e.g counters with value 0)

@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 hdrhistogram = "7.1"
-rand = "0.7"
+rand = "0.8"
 atomic = "0.5"
 tokio = { version = "0.2", features = [ "time" ] }
 serde = { version = "1.0", features = ["derive"] }
@@ -17,7 +17,7 @@ serde_prometheus = "0.1"
 thiserror = "1.0"
 
 [dependencies.metered]
-version = "0.7"
+version = "0.8"
 path = "../metered"
 features = [
     # Enable to override the default and skip "cleared" entries from the `error_count`
