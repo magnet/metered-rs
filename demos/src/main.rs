@@ -27,6 +27,12 @@ fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
     })
 }
 
+fn test_incr(metrics: &TestMetrics) -> Result<(), ()> {
+    let hit_count = &metrics.hit_count;
+    hit_count.incr_by(3);
+    Ok(())
+}
+
 fn sync_procmacro_demo(baz: &Baz) {
     for i in 1..=10 {
         baz.foo();
@@ -50,6 +56,8 @@ fn simple_api_demo() {
 
     let _ = test(false, &metrics);
     let _ = test(true, &metrics);
+    let _ = test_incr(&metrics);
+
     // Print the results!
     let serialized = serde_prometheus::to_string(&metrics, None, HashMap::new()).unwrap();
     println!("{}", serialized);

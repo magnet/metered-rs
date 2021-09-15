@@ -1,7 +1,10 @@
 //! A module providing thread-safe and unsynchronized implementations for Gauges
 //! on various unsized integers.
 
-use crate::{atomic::AtomicInt, metric::Gauge};
+use crate::{
+    atomic::AtomicInt,
+    metric::{BatchGauge, Gauge},
+};
 use std::cell::Cell;
 
 macro_rules! impl_gauge_for {
@@ -16,6 +19,18 @@ macro_rules! impl_gauge_for {
             }
         }
 
+        impl BatchGauge for Cell<$int> {
+            fn incr_by(&self, count: usize) {
+                let num = count as $int;
+                self.set(self.get() + num);
+            }
+
+            fn decr_by(&self, count: usize) {
+                let num = count as $int;
+                self.set(self.get() - num);
+            }
+        }
+
         impl Gauge for AtomicInt<$int> {
             fn incr(&self) {
                 AtomicInt::<$int>::incr(&self);
@@ -23,6 +38,18 @@ macro_rules! impl_gauge_for {
 
             fn decr(&self) {
                 AtomicInt::<$int>::decr(&self);
+            }
+        }
+
+        impl BatchGauge for AtomicInt<$int> {
+            fn incr_by(&self, count: usize) {
+                let num = count as $int;
+                AtomicInt::<$int>::incr_by(&self, num);
+            }
+
+            fn decr_by(&self, count: usize) {
+                let num = count as $int;
+                AtomicInt::<$int>::decr_by(&self, num);
             }
         }
     };

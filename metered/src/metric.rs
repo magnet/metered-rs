@@ -2,7 +2,7 @@
 
 use crate::clear::{Clear, Clearable};
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
-pub use aspect::{Advice, OnResult, OnResultMut, Enter};
+pub use aspect::{Advice, Enter, OnResult, OnResultMut};
 use serde::Serialize;
 use std::marker::PhantomData;
 
@@ -63,6 +63,12 @@ pub trait Counter: Default + Clear + Clearable + Serialize {
     fn incr(&self);
 }
 
+/// A batch trait for Counters
+pub trait BatchCounter: Counter {
+    /// Increment the counter by count in one step
+    fn incr_by(&self, count: usize);
+}
+
 /// A trait for Gauges
 pub trait Gauge: Default + Clear + Serialize {
     /// Increment the counter
@@ -70,6 +76,15 @@ pub trait Gauge: Default + Clear + Serialize {
 
     /// Decrement the counter
     fn decr(&self);
+}
+
+/// A batch trait for Gauges
+pub trait BatchGauge: Gauge {
+    /// Increment the gauge by count in one step
+    fn incr_by(&self, count: usize);
+
+    /// Decrement the gauge by count in one step
+    fn decr_by(&self, count: usize);
 }
 
 /// A trait for Histograms

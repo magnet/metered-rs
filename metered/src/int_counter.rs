@@ -4,7 +4,7 @@
 use crate::{
     atomic::AtomicInt,
     clear::{Clear, Clearable},
-    metric::Counter,
+    metric::{BatchCounter, Counter},
 };
 use std::cell::Cell;
 
@@ -13,6 +13,13 @@ macro_rules! impl_counter_for {
         impl Counter for Cell<$int> {
             fn incr(&self) {
                 self.set(self.get() + 1);
+            }
+        }
+
+        impl BatchCounter for Cell<$int> {
+            fn incr_by(&self, count: usize) {
+                let num = count as $int;
+                self.set(self.get() + num);
             }
         }
 
@@ -31,6 +38,13 @@ macro_rules! impl_counter_for {
         impl Counter for AtomicInt<$int> {
             fn incr(&self) {
                 AtomicInt::<$int>::incr(&self);
+            }
+        }
+
+        impl BatchCounter for AtomicInt<$int> {
+            fn incr_by(&self, count: usize) {
+                let num = count as $int;
+                AtomicInt::<$int>::incr_by(&self, num);
             }
         }
 

@@ -40,9 +40,19 @@ macro_rules! impl_blocks_for {
                 self.inner.fetch_add(1, Ordering::Relaxed)
             }
 
+            /// Increments self by count
+            pub fn incr_by(&self, count: $int) -> $int {
+                self.inner.fetch_add(count, Ordering::Relaxed)
+            }
+
             /// Decrements self
             pub fn decr(&self) -> $int {
                 self.inner.fetch_sub(1, Ordering::Relaxed)
+            }
+
+            /// Decrements self by count
+            pub fn decr_by(&self, count: $int) -> $int {
+                self.inner.fetch_sub(count, Ordering::Relaxed)
             }
 
             /// Sets self to a new value
