@@ -148,6 +148,7 @@ pub mod hdr_histogram;
 pub mod int_counter;
 pub mod int_gauge;
 pub mod metric;
+pub(crate) mod num_wrapper;
 pub mod time_source;
 
 pub use common::{ErrorCount, HitCount, InFlight, ResponseTime, Throughput};

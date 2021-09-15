@@ -2,7 +2,7 @@
 
 use crate::clear::{Clear, Clearable};
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
-pub use aspect::{Advice, OnResult, OnResultMut, Enter};
+pub use aspect::{Advice, Enter, OnResult, OnResultMut};
 use serde::Serialize;
 use std::marker::PhantomData;
 
@@ -60,16 +60,40 @@ impl<'a, R, M: Metric<R>> Drop for ExitGuard<'a, R, M> {
 /// A trait for Counters
 pub trait Counter: Default + Clear + Clearable + Serialize {
     /// Increment the counter
-    fn incr(&self);
+    fn incr(&self) {
+        self.incr_by(1)
+    }
+
+    /// Increment the counter by count in one step
+    ///
+    /// Supplying a count larger than the underlying counter's remaining capacity
+    /// will wrap like [`u8::wrapping_add`] and similar methods.
+    fn incr_by(&self, count: usize);
 }
 
 /// A trait for Gauges
 pub trait Gauge: Default + Clear + Serialize {
     /// Increment the counter
-    fn incr(&self);
+    fn incr(&self) {
+        self.incr_by(1)
+    }
 
     /// Decrement the counter
-    fn decr(&self);
+    fn decr(&self) {
+        self.decr_by(1)
+    }
+
+    /// Increment the gauge by count in one step
+    ///
+    /// Supplying a count larger than the underlying counter's remaining capacity
+    /// will wrap like [`u8::wrapping_add`] and similar methods.
+    fn incr_by(&self, count: usize);
+
+    /// Decrement the gauge by count in one step
+    ///
+    /// Supplying a count larger than the underlying counter's current value
+    /// will wrap like [`u8::wrapping_sub`] and similar methods.
+    fn decr_by(&self, count: usize);
 }
 
 /// A trait for Histograms
