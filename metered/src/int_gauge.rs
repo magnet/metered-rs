@@ -1,28 +1,32 @@
 //! A module providing thread-safe and unsynchronized implementations for Gauges
 //! on various unsized integers.
 
-use crate::{atomic::AtomicInt, metric::Gauge};
+use crate::{atomic::AtomicInt, metric::Gauge, num_wrapper::NumWrapper};
 use std::cell::Cell;
 
 macro_rules! impl_gauge_for {
     ($int:path) => {
         impl Gauge for Cell<$int> {
-            fn incr(&self) {
-                self.set(self.get() + 1);
+            fn incr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                self.set(self.get().wrapping_add(v));
             }
 
-            fn decr(&self) {
-                self.set(self.get() - 1);
+            fn decr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                self.set(self.get().wrapping_sub(v));
             }
         }
 
         impl Gauge for AtomicInt<$int> {
-            fn incr(&self) {
-                AtomicInt::<$int>::incr(&self);
+            fn incr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                AtomicInt::<$int>::incr_by(&self, v);
             }
 
-            fn decr(&self) {
-                AtomicInt::<$int>::decr(&self);
+            fn decr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                AtomicInt::<$int>::decr_by(&self, v);
             }
         }
     };

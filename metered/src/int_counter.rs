@@ -5,14 +5,16 @@ use crate::{
     atomic::AtomicInt,
     clear::{Clear, Clearable},
     metric::Counter,
+    num_wrapper::NumWrapper,
 };
 use std::cell::Cell;
 
 macro_rules! impl_counter_for {
     ($int:path) => {
         impl Counter for Cell<$int> {
-            fn incr(&self) {
-                self.set(self.get() + 1);
+            fn incr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                self.set(self.get().wrapping_add(v));
             }
         }
 
@@ -29,8 +31,9 @@ macro_rules! impl_counter_for {
         }
 
         impl Counter for AtomicInt<$int> {
-            fn incr(&self) {
-                AtomicInt::<$int>::incr(&self);
+            fn incr_by(&self, count: usize) {
+                let v = NumWrapper::<$int>::wrap(count);
+                AtomicInt::<$int>::incr_by(&self, v);
             }
         }
 
