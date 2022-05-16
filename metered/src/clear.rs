@@ -1,6 +1,8 @@
 //! A module providing a Clear trait which signals metrics to clear their state
 //! if applicable.
 
+use std::sync::Arc;
+
 /// The `Clear` trait is used to signal metrics to clear their state if
 /// applicable
 ///
@@ -11,6 +13,18 @@
 pub trait Clear {
     /// Requests to clear self.
     fn clear(&self);
+}
+
+impl<T: Clear> Clear for Arc<T> {
+    fn clear(&self) {
+        (&**self).clear();
+    }
+}
+
+impl<T: Clear> Clear for &T {
+    fn clear(&self) {
+        (*self).clear();
+    }
 }
 
 /// The `Clearable` trait is used to provide metadata around some types that can
