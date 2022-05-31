@@ -1,4 +1,4 @@
-//! The module supporting #[measure] options
+//! The module supporting `#[measure]` options
 
 use syn::{
     parse::{Parse, ParseStream},

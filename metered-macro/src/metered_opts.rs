@@ -1,4 +1,4 @@
-//! The module supporting #[metered] options
+//! The module supporting `#[metered]` options
 
 use syn::{
     parse::{Parse, ParseStream},

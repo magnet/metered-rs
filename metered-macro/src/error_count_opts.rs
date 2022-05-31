@@ -1,4 +1,4 @@
-//! The module supporting #[error_count] options
+//! The module supporting `#[error_count]` options
 
 use syn::{
     parse::{Parse, ParseStream},
