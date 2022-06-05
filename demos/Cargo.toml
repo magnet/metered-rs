@@ -1,5 +1,5 @@
 [package]
-name = "metered-demo-nightly"
+name = "metered-demo"
 version = "0.1.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 edition = "2018"
