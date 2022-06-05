@@ -1,5 +1,5 @@
 use crate::error_count_opts::ErrorCountKeyValAttribute;
-use heck::SnakeCase;
+use heck::ToSnakeCase;
 use proc_macro::TokenStream;
 use syn::{Attribute, Field, Fields, Ident, ItemEnum};
 

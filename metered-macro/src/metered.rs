@@ -24,8 +24,8 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     let mut reg_clears = quote! {};
 
     for (fun_name, _) in measured.iter() {
-        use heck::CamelCase;
-        let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
+        use heck::ToUpperCamelCase;
+        let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_upper_camel_case());
         let fun_registry_ident = syn::Ident::new(&fun_reg_name, impl_block.impl_token.span);
 
         reg_fields = quote! {
@@ -59,8 +59,8 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream
     drop(reg_fields);
 
     for (fun_name, measure_request_attrs) in measured.iter() {
-        use heck::CamelCase;
-        let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_camel_case());
+        use heck::ToUpperCamelCase;
+        let fun_reg_name = format!("{}{}", registry_name, fun_name.to_string().to_upper_camel_case());
         let fun_registry_ident = syn::Ident::new(&fun_reg_name, impl_block.impl_token.span);
 
         let mut fun_reg_fields = quote! {};

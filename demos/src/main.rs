@@ -103,6 +103,6 @@ fn main() {
     let baz = Baz::default();
 
     sync_procmacro_demo(&baz);
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async_procmacro_demo(baz));
 }

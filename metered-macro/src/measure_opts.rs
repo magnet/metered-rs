@@ -224,7 +224,7 @@ impl MeasureRequestKeyValAttribute {
 }
 
 fn make_field_name(type_path: &syn::TypePath) -> String {
-    use heck::SnakeCase;
+    use heck::ToSnakeCase;
     type_path
         .path
         .segments

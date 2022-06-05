@@ -18,8 +18,8 @@ aspect-weave = "0.2"
 synattra = "0.2"
 quote = "1.0"
 proc-macro2 = "1.0"
-heck = "0.3"
-indexmap = "1.6"
+heck = "0.4"
+indexmap = "1.8"
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
