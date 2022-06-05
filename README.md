@@ -18,13 +18,19 @@ Metered is built with the following principles in mind:
 
  * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/0.8.0/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
+ * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/latest/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
 
  Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
 
 
 ## Changelog
 
+* 0.9.0:
+  * Wrapping int metrics instead of under/overflow
+  * Provide methods to increment or decrement int metrics by more than 1, useful for batched computations
+  * Add blanket implementations for `Clear` (contributed by [@plankton6](https://github.com/plankton6)) 
+  * Add len method to `HdrHistogram` (contributed by [@plankton6](https://github.com/plankton6)) 
+  * Code quality fixes and dependency updates
 * 0.8.0:
   * Update Metrics via `OnResultMut` rather than an `OnResult` to support metrics that require mutable access to the result - for instance to consume a `Stream` (contributed by [@w4](https://github.com/w4))
 * 0.7.0:

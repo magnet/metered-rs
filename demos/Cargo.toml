@@ -17,7 +17,7 @@ serde_prometheus = "0.1"
 thiserror = "1.0"
 
 [dependencies.metered]
-version = "0.8"
+version = "0.9"
 path = "../metered"
 features = [
     # Enable to override the default and skip "cleared" entries from the `error_count`
