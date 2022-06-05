@@ -4,15 +4,15 @@
 //! Inspired by Coda Hale's Java metrics library, Metered makes live
 //! measurements easy by providing measurement declarative and procedural
 //! macros, and a variety of useful metrics ready out-of-the-box:
-//! * [`HitCount`](common/struct.HitCount.html): a counter tracking how much a
+//! * [`HitCount`]: a counter tracking how much a
 //!   piece of code was hit.
-//! * [`ErrorCount`](common/struct.ErrorCount.html): a counter tracking how many
+//! * [`ErrorCount`]: a counter tracking how many
 //!   errors were returned -- (works on any expression returning a std `Result`)
-//! * [`InFlight`](common/struct.InFlight.html): a gauge tracking how many
+//! * [`InFlight`]: a gauge tracking how many
 //!   requests are active
-//! * [`ResponseTime`](common/struct.ResponseTime.html): statistics backed by an
+//! * [`ResponseTime`]: statistics backed by an
 //!   HdrHistogram of the duration of an expression
-//! * [`Throughput`](common/struct.Throughput.html): statistics backed by an
+//! * [`Throughput`]: statistics backed by an
 //!   HdrHistogram of how many times an expression is called per second.
 //!
 //! These metrics are usually applied to methods, using provided procedural
@@ -29,15 +29,15 @@
 //! Notably, stock metrics will *not* allocate memory after they're initialized
 //! the first time.  However, they are triggered at every method call and it can
 //! be interesting to use lighter metrics (e.g
-//! [`HitCount`](common/struct.HitCount.html)) in hot code paths and favour
-//! heavier metrics ([`Throughput`](common/struct.Throughput.html),
-//! [`ResponseTime`](common/struct.ResponseTime.html)) in higher-level entry
+//! [`HitCount`]) in hot code paths and favour
+//! heavier metrics ([`Throughput`],
+//! [`ResponseTime`]) in higher-level entry
 //! points.
 //!
 //! If a metric you need is missing, or if you want to customize a metric (for
 //! instance, to track how many times a specific error occurs, or react
 //! depending on your return type), it is possible to implement your own metrics
-//! simply by implementing the [`Metric`](metric/trait.Metric.html) trait .
+//! simply by implementing the [`Metric`] trait .
 //!
 //! Metered does not use statics or shared global state. Instead, it lets you
 //! either build your own metric registry using the metrics you need, or can
@@ -48,8 +48,8 @@
 //! expression can be overridden with the `registry_expr` attribute parameter.
 //! See the demos for more examples.
 //!
-//! Metered will generate metric registries that derive `Debug` and
-//! `serde::Serialize` to extract your metrics easily. Metered generates one
+//! Metered will generate metric registries that derive [`std::fmt::Debug`] and
+//! [`serde::Serialize`] to extract your metrics easily. Metered generates one
 //! sub-registry per method annotated with the `measure` attribute, hence
 //! organizing metrics hierarchically. This ensures access time to metrics in
 //! generated registries is always constant (and, when possible,
@@ -57,12 +57,12 @@
 //!
 //! Metered will happily measure any method, whether it is `async` or not, and
 //! the metrics will work as expected (e.g,
-//! [`ResponseTime`](common/struct.ResponseTime.html) will return the completion
+//! [`ResponseTime`] will return the completion
 //! time across `await`'ed invocations).
 //!
-//! Right now, Metered does not provide bridges to external metric storage or
-//! monitoring systems. Such support is planned in separate modules
-//! (contributions welcome!).
+//! Metered's serialized metrics can be used in conjunction with
+//! [`serde_prometheus`](https://github.com/w4/serde_prometheus) to publish
+//! metrics to Prometheus.
 //!
 //! ## Example using procedural macros (recommended)
 //!
@@ -91,8 +91,8 @@
 //! ```
 //!
 //! In the snippet above, we will measure the
-//! [`HitCount`](common/struct.HitCount.html) and
-//! [`Throughput`](common/struct.Throughput.html) of the `biz` method.
+//! [`HitCount`] and
+//! [`Throughput`] of the `biz` method.
 //!
 //! This works by first annotating the `impl` block with the `metered`
 //! annotation and specifying the name Metered should give to the metric
@@ -153,6 +153,7 @@ pub mod time_source;
 
 pub use common::{ErrorCount, HitCount, InFlight, ResponseTime, Throughput};
 pub use metered_macro::{error_count, metered};
+pub use metric::{Counter, Gauge, Histogram, Metric};
 
 /// Re-export this type so 3rd-party crates don't need to depend on the
 /// `aspect-rs` crate.

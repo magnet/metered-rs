@@ -1,4 +1,4 @@
-//! A module defining the `Metric` trait and common metric backends.
+//! A module defining the [`Metric`] trait and common metric backends.
 
 use crate::clear::{Clear, Clearable};
 /// Re-export `aspect-rs`'s types to avoid crates depending on it.
@@ -14,7 +14,7 @@ use std::marker::PhantomData;
 /// handling.
 pub trait Metric<R>: Default + OnResultMut<R> + Clear + Serialize {}
 
-// Needed to force `measure!` to work only with the `Metric` trait.
+// Needed to force `measure!` to work only with the [`Metric`] trait.
 #[doc(hidden)]
 pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, _result: &mut R) -> Advice {
     metric.on_result(_enter, _result)
@@ -28,7 +28,7 @@ pub struct ExitGuard<'a, R, M: Metric<R>> {
 
 impl<'a, R, M: Metric<R>> ExitGuard<'a, R, M> {
     /// Enter a metric and create the guard for its exit.
-    /// This calls aspect::Enter::enter on the metric internally.
+    /// This calls [`aspect::Enter::enter`] on the metric internally.
     pub fn new(metric: &'a M) -> Self {
         Self {
             metric,

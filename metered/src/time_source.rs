@@ -19,7 +19,7 @@ pub trait Instant {
 }
 
 /// A new-type wrapper for std Instants and Metered's
-/// [Instant](trait.Instant.html) trait that measures time in milliseconds.
+/// [Instant] trait that measures time in milliseconds.
 #[derive(Debug, Clone)]
 pub struct StdInstant(std::time::Instant);
 impl Instant for StdInstant {
@@ -37,7 +37,7 @@ impl Instant for StdInstant {
 }
 
 /// A new-type wrapper for std Instants and Metered's
-/// [Instant](trait.Instant.html) trait that measures time in microseconds.
+/// [Instant] trait that measures time in microseconds.
 #[derive(Debug, Clone)]
 pub struct StdInstantMicros(std::time::Instant);
 impl Instant for StdInstantMicros {

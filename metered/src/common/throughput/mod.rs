@@ -32,7 +32,9 @@ pub struct Throughput<T: Instant = StdInstant, P: RecordThroughput = AtomicTxPer
     std::marker::PhantomData<T>,
 );
 
+/// Trait to record the throughput on a [`Throughput`] instance.
 pub trait RecordThroughput: Default {
+    /// Called after the execution that the throughput metric is measuring.
     fn on_result(&self);
 }
 

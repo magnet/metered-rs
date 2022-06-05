@@ -7,7 +7,7 @@ use crate::{
 use parking_lot::Mutex;
 use serde::{Serialize, Serializer};
 
-/// Thread-safe implementation of `RecordThroughput`. It uses a `Mutex` to wrap
+/// Thread-safe implementation of [`super::RecordThroughput`]. It uses a `Mutex` to wrap
 /// `TxPerSec`.
 pub struct AtomicTxPerSec<T: Instant = StdInstant> {
     /// The inner mutex protecting the `TxPerSec` value holding the histogram
