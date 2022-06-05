@@ -89,8 +89,8 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// A procedural macro that generates a new metric that measures the amount
-/// of times each variant of an error has been thrown, to be used as crate-specific
-/// replacement for `metered::ErrorCount`.
+/// of times each variant of an error has been thrown, to be used as
+/// crate-specific replacement for `metered::ErrorCount`.
 ///
 /// ```
 /// # use metered_macro::{metered, error_count};
@@ -131,15 +131,15 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// assert_eq!(baz.metrics.biz.error_count.my_library.init_error.get(), 1);
 /// ```
 ///
-/// - `name` is required and must be a valid Rust ident, this is the name
-///   of the generated struct containing a counter for each enum variant.
-/// - `visibility` specifies to visibility of the generated struct, it
-///   defaults to `pub(crate)`.
-/// - `skip_cleared` allows to make the serializer skip "cleared" entries,
-///    that is entries for which the `Clearable::is_cleared` function
-///    returns true (for counters, by default, whether they are 0). It defaults
-///    to whether the feature `error-count-skip-cleared-by-default` is enabled.
-///    By default, this feature is disabled, and no entry will be skipped.
+/// - `name` is required and must be a valid Rust ident, this is the name of the
+///   generated struct containing a counter for each enum variant.
+/// - `visibility` specifies to visibility of the generated struct, it defaults
+///   to `pub(crate)`.
+/// - `skip_cleared` allows to make the serializer skip "cleared" entries, that
+///   is entries for which the `Clearable::is_cleared` function returns true
+///   (for counters, by default, whether they are 0). It defaults to whether the
+///   feature `error-count-skip-cleared-by-default` is enabled. By default, this
+///   feature is disabled, and no entry will be skipped.
 ///
 ///
 /// The `error_count` macro may only be applied to any enums that have a

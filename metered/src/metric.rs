@@ -66,8 +66,8 @@ pub trait Counter: Default + Clear + Clearable + Serialize {
 
     /// Increment the counter by count in one step
     ///
-    /// Supplying a count larger than the underlying counter's remaining capacity
-    /// will wrap like [`u8::wrapping_add`] and similar methods.
+    /// Supplying a count larger than the underlying counter's remaining
+    /// capacity will wrap like [`u8::wrapping_add`] and similar methods.
     fn incr_by(&self, count: usize);
 }
 
@@ -85,8 +85,8 @@ pub trait Gauge: Default + Clear + Serialize {
 
     /// Increment the gauge by count in one step
     ///
-    /// Supplying a count larger than the underlying counter's remaining capacity
-    /// will wrap like [`u8::wrapping_add`] and similar methods.
+    /// Supplying a count larger than the underlying counter's remaining
+    /// capacity will wrap like [`u8::wrapping_add`] and similar methods.
     fn incr_by(&self, count: usize);
 
     /// Decrement the gauge by count in one step

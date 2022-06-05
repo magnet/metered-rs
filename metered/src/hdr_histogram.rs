@@ -103,7 +103,8 @@ impl HdrHistogram {
     }
 
     /// Get the highest recorded value level in the histogram.
-    /// If the histogram has no recorded values, the value returned is undefined.
+    /// If the histogram has no recorded values, the value returned is
+    /// undefined.
     pub fn max(&self) -> u64 {
         self.histo.max()
     }

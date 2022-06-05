@@ -13,9 +13,9 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
 
     let nested_attrs = get_nested_attrs(&mut input)?;
 
-    // get the type of the metric for each variant, most of the time this will be `C`, but
-    // if `#[nested(Abc)]` is on a variant field, the type will instead be set to `Abc` and
-    // incrs will be delegated there
+    // get the type of the metric for each variant, most of the time this will be
+    // `C`, but if `#[nested(Abc)]` is on a variant field, the type will instead
+    // be set to `Abc` and incrs will be delegated there
     let metric_type = nested_attrs
         .iter()
         .map(|(_, v)| {
@@ -41,8 +41,9 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
         .map(|v| Ident::new(&v.ident.to_string().to_snake_case(), v.ident.span()))
         .collect();
 
-    // copy #[cfg(..)] attributes from the variant and apply them to the corresponding
-    // error in our struct so we don't point to an invalid variant in certain configurations.
+    // copy #[cfg(..)] attributes from the variant and apply them to the
+    // corresponding error in our struct so we don't point to an invalid variant
+    // in certain configurations.
     let cfg_attrs: Vec<Vec<&Attribute>> = input
         .variants
         .iter()
@@ -76,8 +77,8 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             syn::Fields::Unit => quote!(),
         });
 
-    // generate incr calls for each variant, if a field is marked with `#[nested]`, the incr is instead
-    // delegated there
+    // generate incr calls for each variant, if a field is marked with `#[nested]`,
+    // the incr is instead delegated there
     let variant_incr_call =
         nested_attrs
             .iter()
@@ -158,18 +159,19 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
 
 type FieldWithNestedAttribute = Option<(Field, Attribute)>;
 
-/// Gets all variants from the given `ItemEnum`, and returns `Some(Field, Attribute)` along with
-/// each variant if one of fields contained a `#[nested]` attribute.
+/// Gets all variants from the given `ItemEnum`, and returns `Some(Field,
+/// Attribute)` along with each variant if one of fields contained a `#[nested]`
+/// attribute.
 ///
-/// If a `#[nested]` attribute is found, then the attribute itself removed from `input` so that
-/// we don't get "unrecognised attribute" errors.
+/// If a `#[nested]` attribute is found, then the attribute itself removed from
+/// `input` so that we don't get "unrecognised attribute" errors.
 fn get_nested_attrs(input: &mut ItemEnum) -> syn::Result<Vec<(Fields, FieldWithNestedAttribute)>> {
     let attrs = input
         .variants
         .iter_mut()
         .map(|v| {
-            // clone fields before we do any mutation on it so consumers can figure out the position
-            // of #[nested] fields.
+            // clone fields before we do any mutation on it so consumers can figure out the
+            // position of #[nested] fields.
             let fields = v.fields.clone();
 
             let inner_fields = match &mut v.fields {

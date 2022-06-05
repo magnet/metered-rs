@@ -10,14 +10,14 @@ use std::marker::PhantomData;
 /// * It is observable
 /// * Metered should never panic business code
 /// * While we could argue that gauges saturate at max capacity, doing
-/// so will unbalance the gauge when decrementing the count after a saturated add.
-/// Instead we guarantee that for all `N`, each `incr_by(N)` followed by a `decr_by(N)`
-/// results in the original value.
+/// so will unbalance the gauge when decrementing the count after a saturated
+/// add. Instead we guarantee that for all `N`, each `incr_by(N)` followed by a
+/// `decr_by(N)` results in the original value.
 ///
-/// Should we avoid calling `NumWrapper` with `count = 1`, i.e is the optimizer able
-/// to get rid of the wrapping computations?  The Godbolt compiler explorer shows that
-/// starting `opt-level = 1`, the generated call is equivalent.  Program below for
-/// future reference:
+/// Should we avoid calling `NumWrapper` with `count = 1`, i.e is the optimizer
+/// able to get rid of the wrapping computations?  The Godbolt compiler explorer
+/// shows that starting `opt-level = 1`, the generated call is equivalent.
+/// Program below for future reference:
 /// ```rust
 /// pub fn wrap(count: usize) -> u8 {
 ///     (count % (u8::MAX as usize + 1)) as u8
