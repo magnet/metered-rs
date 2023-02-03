@@ -11,7 +11,8 @@ use serde::{Serialize, Serializer};
 pub struct TxPerSec<T: Instant = StdInstant> {
     /// The inner histogram
     pub hdr_histogram: HdrHistogram,
-    last: Option<T>,
+    start_time: Option<T>,
+    last_window: u64,
     count: u64,
     time_source: std::marker::PhantomData<T>,
 }
@@ -22,7 +23,8 @@ impl<T: Instant> Default for TxPerSec<T> {
             // Bound at 100K TPS, higher values will be saturated...
             // TODO: make this configurable :)
             hdr_histogram: HdrHistogram::with_bound(100_000),
-            last: None,
+            start_time: None,
+            last_window: 0,
             count: 0,
             time_source: std::marker::PhantomData,
         }
@@ -43,26 +45,39 @@ impl<T: Instant> Clear for std::cell::RefCell<TxPerSec<T>> {
 }
 
 impl<T: Instant> TxPerSec<T> {
-    pub(crate) fn on_result(&mut self) {
-        // Record previous count if the 1-sec window has closed
-        if let Some(ref last) = self.last {
-            let elapsed = last.elapsed_time();
-            if elapsed > T::ONE_SEC {
+    /// Record previous count if the 1-sec window has closed and advance time window
+    fn update(&mut self) {
+        if let Some(ref start_time) = self.start_time {
+            let elapsed = start_time.elapsed_time();
+            let this_window = elapsed / T::ONE_SEC;
+            if this_window > self.last_window {
+                // Record this window
                 self.hdr_histogram.record(self.count);
                 self.count = 0;
-                self.last = Some(T::now());
+
+                // Record windows with no samples
+                let empty_windows = this_window - self.last_window - 1;
+                if empty_windows > 0 {
+                    self.hdr_histogram.record_n(0, empty_windows)
+                }
+
+                // Advance window
+                self.last_window = this_window;
             }
         } else {
-            // Start a new window
-            self.last = Some(T::now());
+            // Set first window start time
+            self.start_time = Some(T::now());
         };
-
+    }
+    pub(crate) fn on_result(&mut self) {
+        self.update();
         self.count += 1;
     }
 
     pub(crate) fn clear(&mut self) {
         self.hdr_histogram.clear();
-        self.last = None;
+        self.start_time = None;
+        self.last_window = 0;
         self.count = 0;
     }
 }

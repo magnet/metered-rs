@@ -86,6 +86,15 @@ impl HdrHistogram {
         self.histo.saturating_record(value);
     }
 
+    /// Records  multiple samples for a value to the histogram
+    ///
+    /// This is a saturating record: if the value is higher than `max_bound`,
+    /// max_bound will be recorded instead.
+    pub fn record_n(&mut self, value: u64, count: u64) {
+        // All recordings will be saturating
+        self.histo.saturating_record_n(value, count);
+    }
+
     /// Clears the values of the histogram
     pub fn clear(&mut self) {
         self.histo.reset();
