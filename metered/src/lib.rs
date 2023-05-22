@@ -205,3 +205,10 @@ pub trait ErrorBreakdown<C: metric::Counter> {
     /// The generated error count struct.
     type ErrorCount;
 }
+
+/// Generic trait for `ErrorBreakdown::ErrorCount` to increase error count for a
+/// specific variant by 1.
+pub trait ErrorBreakdownIncr<E> {
+    /// Increase count for given variant by 1.
+    fn incr(&self, e: &E);
+}

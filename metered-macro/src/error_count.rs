@@ -121,8 +121,8 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             )*
         }
 
-        impl<C: metered::metric::Counter> #metrics_ident<C> {
-            pub fn incr(&self, err: &#ident) {
+        impl<C: metered::metric::Counter> metered::ErrorBreakdownIncr<#ident> for #metrics_ident<C> {
+            fn incr(&self, err: &#ident) {
                 match err {
                     #( #(#cfg_attrs)* #ident::#variants #variants_args => #variant_incr_call, )*
                 }
@@ -145,7 +145,7 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
         impl<T, C: metered::metric::Counter> metered::metric::OnResult<Result<T, #ident>> for #metrics_ident<C> {
             fn on_result(&self, _: (), r: &Result<T, #ident>) -> metered::metric::Advice {
                 if let Err(e) = r {
-                    self.incr(e);
+                    metered::ErrorBreakdownIncr::incr(self, e);
                 }
                 metered::metric::Advice::Return
             }
