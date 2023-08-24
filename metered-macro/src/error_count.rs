@@ -143,7 +143,7 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
         }
 
         impl<T, C: metered::metric::Counter> metered::metric::OnResult<Result<T, #ident>> for #metrics_ident<C> {
-            fn on_result(&self, _: (), r: &Result<T, #ident>) -> metered::metric::Advice {
+            fn on_result(&self, (): (), r: &Result<T, #ident>) -> metered::metric::Advice {
                 if let Err(e) = r {
                     self.incr(e);
                 }
