@@ -1,5 +1,8 @@
 //! A module for Time Sources.
 
+use std::convert::TryFrom;
+use std::time::Duration;
+
 /// A trait for any time source providing time measurements in milliseconds.
 ///
 /// It is useful to let users provide an unsynchronized  (`!Send`/`!Sync`) time
@@ -13,6 +16,9 @@ pub trait Instant {
     /// The unit depends on the Instant's resolution, as defined by the
     /// `ONE_SEC` constant.
     fn elapsed_time(&self) -> u64;
+
+    /// Return the amount of units from a Duration.
+    fn units(duration: Duration) -> u64;
 
     /// One second in the instant units.
     const ONE_SEC: u64;
@@ -34,6 +40,10 @@ impl Instant for StdInstant {
 
         elapsed.as_secs() * Self::ONE_SEC + u64::from(elapsed.subsec_millis())
     }
+
+    fn units(duration: Duration) -> u64 {
+        u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
+    }
 }
 
 /// A new-type wrapper for std Instants and Metered's
@@ -51,5 +61,9 @@ impl Instant for StdInstantMicros {
         let elapsed = self.0.elapsed();
 
         elapsed.as_secs() * Self::ONE_SEC + u64::from(elapsed.subsec_micros())
+    }
+
+    fn units(duration: Duration) -> u64 {
+        u64::try_from(duration.as_micros()).unwrap_or(u64::MAX)
     }
 }

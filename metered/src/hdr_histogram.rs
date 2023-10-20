@@ -77,6 +77,11 @@ impl HdrHistogram {
         HdrHistogram { histo }
     }
 
+    /// Get the histogram bound
+    pub fn bound(&self) -> u64 {
+        self.histo.high()
+    }
+
     /// Records a value to the histogram
     ///
     /// This is a saturating record: if the value is higher than `max_bound`,

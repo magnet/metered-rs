@@ -8,7 +8,7 @@ use crate::{
 };
 use aspect::{Advice, Enter, OnResult};
 use serde::{Serialize, Serializer};
-use std::ops::Deref;
+use std::{ops::Deref, time::Duration};
 
 /// A metric measuring the response time of an expression, that is the duration
 /// the expression needed to complete.
@@ -27,12 +27,34 @@ pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInsta
     std::marker::PhantomData<T>,
 );
 
+impl<H: Histogram, T: Instant> ResponseTime<H, T> {
+    /// Build a ResponseTime with a custom histogram bound
+    /// 
+    /// ```rust
+    /// use std::time::Duration;
+    /// use metered::{ResponseTime, hdr_histogram::AtomicHdrHistogram, time_source::StdInstantMicros};
+    /// 
+    /// let response_time_millis: ResponseTime =
+    ///     ResponseTime::with_bound(Duration::from_secs(4));
+    /// 
+    /// assert_eq!(response_time_millis.histogram().bound(), 4_000);
+    /// 
+    /// let response_time_micros: ResponseTime<AtomicHdrHistogram, StdInstantMicros> =
+    ///     ResponseTime::with_bound(Duration::from_secs(4));
+    /// 
+    /// assert_eq!(response_time_micros.histogram().bound(), 4_000_000);
+    /// ```
+    pub fn with_bound(bound: Duration) -> Self {
+        ResponseTime(H::with_bound(T::units(bound)), std::marker::PhantomData)
+    }
+}
+
 impl<H: Histogram, T: Instant> Default for ResponseTime<H, T> {
     fn default() -> Self {
         // A HdrHistogram measuring latencies from 1ms to 5minutes
         // All recordings will be saturating, that is, a value higher than 5 minutes
         // will be replace by 5 minutes...
-        ResponseTime(H::with_bound(5 * 60 * 1000), std::marker::PhantomData)
+        ResponseTime(H::with_bound(5 * 60 * T::ONE_SEC), std::marker::PhantomData)
     }
 }
 
