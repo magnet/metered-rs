@@ -17,7 +17,7 @@ pub trait Clear {
 
 impl<T: Clear> Clear for Arc<T> {
     fn clear(&self) {
-        (&**self).clear();
+        (**self).clear();
     }
 }
 

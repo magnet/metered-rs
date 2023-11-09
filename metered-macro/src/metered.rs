@@ -156,7 +156,7 @@ impl Weave for MeteredWeave {
             }
         };
 
-        let r = measure_list(&metered.registry_expr, &ident, fn_attr, outer_block);
+        let r = measure_list(&metered.registry_expr, ident, fn_attr, outer_block);
 
         let new_block = syn::parse2::<syn::Block>(r)?;
         Ok(new_block)

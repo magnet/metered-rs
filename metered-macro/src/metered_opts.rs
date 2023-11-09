@@ -82,7 +82,7 @@ impl MeteredKeyValAttribute {
                 }
             })
             .next()
-            .map(|id| Cow::Borrowed(id))
+            .map(Cow::Borrowed)
             .unwrap_or_else(|| Cow::Owned(syn::parse_str::<syn::Expr>("self.metrics").unwrap()));
 
         let visibility = self
@@ -96,7 +96,7 @@ impl MeteredKeyValAttribute {
                 }
             })
             .next()
-            .map(|id| Cow::Borrowed(id))
+            .map(Cow::Borrowed)
             .unwrap_or_else(|| {
                 Cow::Owned(syn::parse_str::<syn::Visibility>("pub(crate)").unwrap())
             });
