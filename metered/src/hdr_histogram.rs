@@ -96,6 +96,11 @@ impl HdrHistogram {
         self.histo.len()
     }
 
+    /// Check if the histogram's recorded values are empty
+    pub fn is_empty(&self) -> bool {
+        self.histo.is_empty()
+    }
+
     /// Get the lowest recorded value level in the histogram.
     /// If the histogram has no recorded values, the value returned will be 0.
     pub fn min(&self) -> u64 {

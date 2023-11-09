@@ -104,10 +104,7 @@ impl Parse for MeasureRequestAttributeInner {
             .try_parse_as(MeasureRequestAttributeInner::TypePath)
             .or_else(|_| input.try_parse_as(MeasureRequestAttributeInner::KeyVal))
             .map_err(|_| {
-                let err = format!(
-                    "invalid format for measure attribute: {}",
-                    input.to_string()
-                );
+                let err = format!("invalid format for measure attribute: {}", input);
                 input.error(err)
             })
     }
@@ -276,7 +273,7 @@ impl Parse for MeasureOptions {
         } else if MeasureDebugOption::peek(input) {
             Ok(input.parse_as(MeasureOptions::Debug)?)
         } else {
-            let err = format!("invalid measure option: {}", input.to_string());
+            let err = format!("invalid measure option: {}", input);
             Err(input.error(err))
         }
     }
