@@ -29,19 +29,19 @@ pub struct ResponseTime<H: Histogram = AtomicHdrHistogram, T: Instant = StdInsta
 
 impl<H: Histogram, T: Instant> ResponseTime<H, T> {
     /// Build a ResponseTime with a custom histogram bound
-    /// 
+    ///
     /// ```rust
     /// use std::time::Duration;
     /// use metered::{ResponseTime, hdr_histogram::AtomicHdrHistogram, time_source::StdInstantMicros};
-    /// 
+    ///
     /// let response_time_millis: ResponseTime =
     ///     ResponseTime::with_bound(Duration::from_secs(4));
-    /// 
+    ///
     /// assert_eq!(response_time_millis.histogram().bound(), 4_000);
-    /// 
+    ///
     /// let response_time_micros: ResponseTime<AtomicHdrHistogram, StdInstantMicros> =
     ///     ResponseTime::with_bound(Duration::from_secs(4));
-    /// 
+    ///
     /// assert_eq!(response_time_micros.histogram().bound(), 4_000_000);
     /// ```
     pub fn with_bound(bound: Duration) -> Self {
