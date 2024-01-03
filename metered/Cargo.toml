@@ -1,6 +1,6 @@
 [package]
 name = "metered"
-version = "0.9.0"
+version = "0.10.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 license = "Apache-2.0 OR MIT"
 readme = "../README.md"
@@ -13,8 +13,8 @@ categories = ["rust-patterns", "development-tools::profiling", "data-structures"
 edition = "2018"
 
 [dependencies]
-metered-macro = { version = "0.9.0", path = "../metered-macro" }
-aspect = "0.3"
+metered-macro = { version = "0.10.0", path = "../metered-macro" }
+aspect = "0.4"
 hdrhistogram = "7.5"
 atomic = "0.5"
 parking_lot = "0.12"
