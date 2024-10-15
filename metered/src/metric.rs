@@ -16,8 +16,8 @@ pub trait Metric<R>: Default + OnResultMut<R> + Clear + Serialize {}
 
 // Needed to force `measure!` to work only with the [`Metric`] trait.
 #[doc(hidden)]
-pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, _result: &mut R) -> Advice {
-    metric.on_result(_enter, _result)
+pub fn on_result<R, A: Metric<R>>(metric: &A, _enter: <A as Enter>::E, result: R) -> (Advice, R) {
+    metric.on_result(_enter, result)
 }
 /// Handles a metric's lifecycle, guarding against early returns and panics.
 pub struct ExitGuard<'a, R, M: Metric<R>> {
@@ -38,11 +38,12 @@ impl<'a, R, M: Metric<R>> ExitGuard<'a, R, M> {
     }
 
     /// If no unexpected exit occurred, record the expression's result.
-    pub fn on_result(mut self, result: &mut R) {
+    pub fn on_result(mut self, result: R) -> R {
         if let Some(enter) = self.enter.take() {
-            self.metric.on_result(enter, result);
+            self.metric.on_result(enter, result).1
         } else {
             // OnResult called twice - we ignore
+            result
         }
     }
 }
