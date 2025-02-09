@@ -160,31 +160,31 @@ pub use aspect::Enter;
 /// The `measure!` macro takes a reference to a metric and an expression.
 ///
 /// It applies the metric and the expression is returned unchanged.
-/// 
+///
 /// ```rust
 /// use metered::{ResponseTime, measure};
-/// 
+///
 /// let response_time: ResponseTime = ResponseTime::default();
-/// 
+///
 /// measure!(&response_time, {
 ///     std::thread::sleep(std::time::Duration::from_millis(100));
 /// });
-/// 
+///
 /// assert!(response_time.histogram().mean() > 0.0);
 /// ```
-/// 
+///
 /// It also allows to pass an array of references, which will expand recursively.
-/// 
+///
 /// ```rust
 /// use metered::{HitCount, ResponseTime, measure};
-/// 
+///
 /// let hit_count: HitCount = HitCount::default();
 /// let response_time: ResponseTime = ResponseTime::default();
-/// 
+///
 /// measure!([&hit_count, &response_time], {
 ///     std::thread::sleep(std::time::Duration::from_millis(100));
 /// });
-/// 
+///
 /// assert_eq!(hit_count.get(), 1);
 /// assert!(response_time.histogram().mean() > 0.0);
 /// ```
@@ -194,7 +194,7 @@ macro_rules! measure {
     ([$metric:expr], $expr:expr) => {{
         $crate::measure!($metric, $expr)
     }};
-    
+
     ([$metric:expr, $($metrics:expr),*], $expr:expr) => {
         $crate::measure!($metric, $crate::measure!([$($metrics),*], $expr))
     };
