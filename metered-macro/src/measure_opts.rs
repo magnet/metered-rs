@@ -235,7 +235,7 @@ fn make_field_name(type_path: &syn::TypePath) -> String {
 impl Parse for MeasureRequestKeyValAttribute {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let this = MeasureRequestKeyValAttribute {
-            values: input.parse_terminated(MeasureOptions::parse)?,
+            values: input.parse_terminated(MeasureOptions::parse, Token![,])?,
         };
 
         this.validate(input)?;

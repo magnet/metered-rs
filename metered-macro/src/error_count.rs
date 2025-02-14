@@ -1,7 +1,7 @@
 use crate::error_count_opts::ErrorCountKeyValAttribute;
 use heck::ToSnakeCase;
 use proc_macro::TokenStream;
-use syn::{Attribute, Field, Fields, Ident, ItemEnum};
+use syn::{spanned::Spanned, Attribute, Field, Fields, Ident, ItemEnum};
 
 pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
     let attrs: ErrorCountKeyValAttribute = syn::parse(attrs)?;
@@ -47,7 +47,12 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
     let cfg_attrs: Vec<Vec<&Attribute>> = input
         .variants
         .iter()
-        .map(|v| v.attrs.iter().filter(|v| v.path.is_ident("cfg")).collect())
+        .map(|v| {
+            v.attrs
+                .iter()
+                .filter(|v| v.path().is_ident("cfg"))
+                .collect()
+        })
         .collect();
 
     // generate unbound arg params for each enum variant
@@ -64,7 +69,11 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             }
             syn::Fields::Unnamed(_) => {
                 let args = fields.iter().map(|field| {
-                    if field.attrs.iter().any(|attr| attr.path.is_ident("nested")) {
+                    if field
+                        .attrs
+                        .iter()
+                        .any(|attr| attr.path().is_ident("nested"))
+                    {
                         quote!(nested)
                     } else {
                         quote!(_)
@@ -88,7 +97,7 @@ pub fn error_count(attrs: TokenStream, item: TokenStream) -> syn::Result<TokenSt
                     let inner_val_ident = field
                         .ident
                         .clone()
-                        .unwrap_or_else(|| Ident::new("nested", attr.bracket_token.span));
+                        .unwrap_or_else(|| Ident::new("nested", attr.bracket_token.span.span()));
                     quote! {{
                         self.#ident.incr(#inner_val_ident);
                     }}
@@ -184,14 +193,14 @@ fn get_nested_attrs(input: &mut ItemEnum) -> syn::Result<Vec<(Fields, FieldWithN
             let mut nested_attr = None;
 
             for field in inner_fields {
-                if let Some(pos) = field.attrs.iter().position(|a| a.path.is_ident("nested")) {
+                if let Some(pos) = field.attrs.iter().position(|a| a.path().is_ident("nested")) {
                     let attr = field.attrs.remove(pos);
 
                     // if we've already found a nested attribute on a field in the current variant,
                     // throw an error
                     if nested_attr.is_some() {
                         return Err(syn::Error::new(
-                            attr.bracket_token.span,
+                            attr.bracket_token.span.span(),
                             "Can't declare `#[nested]` on more than one field in a single variant",
                         ));
                     }

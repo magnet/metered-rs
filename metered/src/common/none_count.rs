@@ -11,7 +11,8 @@ use std::ops::Deref;
 
 /// A metric counting how many times the return value is Ok(None) or None.
 ///
-/// `SomeCount` is not provided since can be calculated by subtracting `NoneCount` from `HitCount`.
+/// `SomeCount` is not provided since can be calculated by subtracting
+/// `NoneCount` from `HitCount`.
 ///
 /// This is a light-weight metric.
 ///

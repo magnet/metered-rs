@@ -126,7 +126,7 @@ impl Weave for MeteredWeave {
     type MacroAttributes = MeteredKeyValAttribute;
 
     fn update_fn_block(
-        item_fn: &syn::ImplItemMethod,
+        item_fn: &syn::ImplItemFn,
         main_attr: &Self::MacroAttributes,
         fn_attr: &[Rc<<Self as ParseAttributes>::Type>],
     ) -> syn::Result<syn::Block> {

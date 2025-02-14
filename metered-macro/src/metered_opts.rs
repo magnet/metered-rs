@@ -112,7 +112,7 @@ impl MeteredKeyValAttribute {
 impl Parse for MeteredKeyValAttribute {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let this = MeteredKeyValAttribute {
-            values: input.parse_terminated(MeteredOption::parse)?,
+            values: input.parse_terminated(MeteredOption::parse, Token![,])?,
         };
 
         this.validate(input)?;

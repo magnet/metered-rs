@@ -45,7 +45,8 @@ impl<T: Instant> Clear for std::cell::RefCell<TxPerSec<T>> {
 }
 
 impl<T: Instant> TxPerSec<T> {
-    /// Record previous count if the 1-sec window has closed and advance time window
+    /// Record previous count if the 1-sec window has closed and advance time
+    /// window
     fn update(&mut self) {
         if let Some(ref start_time) = self.start_time {
             let elapsed = start_time.elapsed_time();

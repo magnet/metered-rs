@@ -109,7 +109,7 @@ impl ErrorCountKeyValAttribute {
 impl Parse for ErrorCountKeyValAttribute {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let this = ErrorCountKeyValAttribute {
-            values: input.parse_terminated(ErrorCountOption::parse)?,
+            values: input.parse_terminated(ErrorCountOption::parse, Token![,])?,
         };
 
         this.validate(input)?;

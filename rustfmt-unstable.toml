@@ -1,6 +1,5 @@
-edition = "2018"
-imports_granularity="Crate"
+edition = "2024"
+imports_granularity = "Crate"
 normalize_comments = true
 unstable_features = true
 wrap_comments = true
-

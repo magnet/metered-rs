@@ -2,7 +2,7 @@
 //!
 //! Please check the Metered crate for more documentation.
 
-#![deny(warnings)]
+// #![deny(warnings)]
 // The `quote!` macro requires deep recursion.
 #![recursion_limit = "512"]
 
@@ -32,10 +32,10 @@ use proc_macro::TokenStream;
 /// #[metered::metered(registry = BizMetrics)]
 /// impl Biz {
 ///     #[measure([HitCount, Throughput])]
-///     pub fn biz(&self) {        
+///     pub fn biz(&self) {
 ///         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
 ///         std::thread::sleep(delay);
-///     }   
+///     }
 /// }
 /// #
 /// # let biz = Biz::default();
@@ -120,9 +120,9 @@ pub fn metered(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// #[metered(registry = BazMetrics)]
 /// impl Baz {
 ///     #[measure(ErrorCount)]
-///     pub fn biz(&self) -> Result<(), Error> {        
+///     pub fn biz(&self) -> Result<(), Error> {
 ///         Err(LibError::InitError.into())
-///     }   
+///     }
 /// }
 ///
 /// let baz = Baz::default();

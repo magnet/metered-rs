@@ -1,5 +1,3 @@
 [workspace]
-members = [
-  "metered",
-  "metered-macro",
-]
+resolver = "2"
+members = ["metered", "metered-macro"]

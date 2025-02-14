@@ -47,7 +47,7 @@ impl<'a, R, M: Metric<R>> ExitGuard<'a, R, M> {
     }
 }
 
-impl<'a, R, M: Metric<R>> Drop for ExitGuard<'a, R, M> {
+impl<R, M: Metric<R>> Drop for ExitGuard<'_, R, M> {
     fn drop(&mut self) {
         if let Some(enter) = self.enter.take() {
             self.metric.leave_scope(enter);

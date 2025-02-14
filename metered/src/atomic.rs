@@ -19,14 +19,14 @@ pub struct AtomicInt<T: Copy> {
     pub inner: atomic::Atomic<T>,
 }
 
-impl<T: Copy> AtomicInt<T> {
+impl<T: Copy + bytemuck::NoUninit> AtomicInt<T> {
     /// Returns the current value
     pub fn get(&self) -> T {
         self.inner.load(Ordering::Relaxed)
     }
 }
 
-impl<T: Copy + Display> Debug for AtomicInt<T> {
+impl<T: Copy + Display + bytemuck::NoUninit> Debug for AtomicInt<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }

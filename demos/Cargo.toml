@@ -2,19 +2,20 @@
 name = "metered-demo"
 version = "0.1.0"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
-edition = "2018"
+edition = "2021"
 
 #break out of workspace
 [workspace]
+resolver = "2"
 
 [dependencies]
 hdrhistogram = "7.5"
-rand = "0.8"
-atomic = "0.5"
-tokio = { version = "1.19", features = [ "rt", "rt-multi-thread", "time" ] }
+rand = "0.9"
+atomic = "0.6"
+tokio = { version = "1.43", features = ["rt", "rt-multi-thread", "time"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_prometheus = "0.1"
-thiserror = "1.0"
+serde_prometheus = "0.2"
+thiserror = "2.0"
 
 [dependencies.metered]
 version = "0.9"
@@ -22,5 +23,5 @@ path = "../metered"
 features = [
     # Enable to override the default and skip "cleared" entries from the `error_count`
     # even when the attribute is not specified.
-    "error-count-skip-cleared-by-default"
-    ]
+    "error-count-skip-cleared-by-default",
+]

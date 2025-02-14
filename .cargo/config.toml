@@ -4,4 +4,3 @@ check-all = "check --all --all-targets --all-features"
 clippy-all = "clippy --all --all-targets --all-features -- -Dwarnings -Drust-2018-idioms -Adeprecated"
 # Format Rust code with stable-compatible nightly features
 fmt-unstable = "fmt --all -- --config-path rustfmt-unstable.toml"
-

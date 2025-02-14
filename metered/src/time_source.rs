@@ -1,7 +1,6 @@
 //! A module for Time Sources.
 
-use std::convert::TryFrom;
-use std::time::Duration;
+use std::{convert::TryFrom, time::Duration};
 
 /// A trait for any time source providing time measurements in milliseconds.
 ///

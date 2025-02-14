@@ -9,23 +9,29 @@ repository = "https://github.com/magnet/metered-rs"
 description = """
 Fast, ergonomic metrics for Rust!
 """
-categories = ["rust-patterns", "development-tools::profiling", "data-structures", "algorithms", "asynchronous"]
-edition = "2018"
+categories = [
+    "rust-patterns",
+    "development-tools::profiling",
+    "data-structures",
+    "algorithms",
+    "asynchronous",
+]
+edition = "2021"
 
 [dependencies]
-syn = {version= "1.0", features = ["full"] }
-aspect-weave = "0.2"
-synattra = "0.2"
+syn = { version = "2.0", features = ["full"] }
+aspect-weave = { git = "https://github.com/midnightexigent/aspect-rs", version = "0.3" }
+synattra = { git = "https://github.com/magnet/synattra", version = "0.3" }
 quote = "1.0"
 proc-macro2 = "1.0"
-heck = "0.4"
-indexmap = "1.8"
+heck = "0.5"
+indexmap = "2.7"
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 metered = { path = "../metered" }
-thiserror = "1.0"
-rand = "0.8"
+thiserror = "2.0"
+rand = "0.9"
 
 [features]
 # When enabled, the error count macro will skip serializing cleared entries (e.g counters with value 0)
