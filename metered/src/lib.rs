@@ -75,6 +75,7 @@ mod model;
 pub mod registry;
 
 // Exposition: render a tree to a sink or a query, or adapt application state.
+pub mod query;
 pub mod sink;
 
 // ---- Public module paths, re-exported from the concern clusters. ----
@@ -145,4 +146,5 @@ pub use registry::entry::Emitter;
 pub use registry::{entry, MetricTreeView, MetricsView, Registry};
 
 // Exposition.
+pub use query::{Query, QueryDialect};
 pub use sink::MetricSink;
