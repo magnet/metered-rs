@@ -63,6 +63,9 @@ mod instruments;
 mod labels;
 mod model;
 
+// Registry & views: assemble a tree from borrowed application state.
+pub mod registry;
+
 // Exposition: render a tree to a sink or a query, or adapt application state.
 pub mod sink;
 
@@ -128,6 +131,10 @@ pub use family::{Family, LabelSet};
 pub use interner::BoundedValues;
 #[doc(no_inline)]
 pub use shape::{Flatten, Renamed};
+
+// Registry & views.
+pub use registry::entry::Emitter;
+pub use registry::{entry, MetricTreeView, MetricsView, Registry};
 
 // Exposition.
 pub use sink::MetricSink;
