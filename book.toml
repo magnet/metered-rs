@@ -1,0 +1,16 @@
+[book]
+title = "Metered"
+authors = ["metered-rs maintainers"]
+description = "OpenMetrics-native metrics for Rust"
+src = "docs/src"
+language = "en"
+
+[output.html]
+git-repository-url = "https://github.com/magnet/metered-rs"
+edit-url-template = "https://github.com/magnet/metered-rs/edit/master/{path}"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

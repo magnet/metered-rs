@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run clippy
+        run: cargo clippy-all
+      # `samples/` is a workspace member compiling every sample file, so the
+      # build/test/clippy steps fail if a sample teaches a removed API.
+      - name: Test all features
+        run: cargo test --workspace --all-features
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+      - name: Enforce core line coverage >= 90%
+        run: >
+          cargo llvm-cov
+          --workspace
+          --all-features
+          --summary-only
+          --fail-under-lines 90
+          --ignore-filename-regex 'metered-macro|examples|samples'
