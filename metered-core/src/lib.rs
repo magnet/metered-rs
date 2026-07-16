@@ -67,6 +67,7 @@ mod model;
 pub mod registry;
 
 // Exposition: render a tree to a sink or a query, or adapt application state.
+pub mod adapter;
 pub mod query;
 pub mod sink;
 
