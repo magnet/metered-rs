@@ -7,5 +7,6 @@ members = [
   "metered-tracing",
   "metered-telemetry-tokio",
   "metered-telemetry-process",
+  "metered-telemetry-system",
   "metered-om",
 ]
