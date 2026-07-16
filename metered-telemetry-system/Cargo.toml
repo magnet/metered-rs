@@ -1,0 +1,25 @@
+[package]
+name = "metered-telemetry-system"
+version = "0.10.0-rc.1"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+readme = "../README.md"
+repository = "https://github.com/magnet/metered-rs"
+description = "Host system telemetry (CPU, memory, swap, load, uptime) as metered MetricTree values."
+edition = "2024"
+rust-version = "1.95"
+
+[features]
+# Optional helper to drive sampling from a background Tokio task, keeping the
+# scrape path free of any OS sampling work.
+tokio = ["dep:tokio"]
+
+[dependencies]
+metered = { package = "metered-core", version = "0.10.0-rc.1", path = "../metered-core" }
+parking_lot = "0.12"
+sysinfo = { version = "0.39.3", default-features = false, features = ["system"] }
+tokio = { version = "1", features = ["rt", "time"], optional = true }
+
+[dev-dependencies]
+metered-om = { version = "0.10.0-rc.1", path = "../metered-om" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
