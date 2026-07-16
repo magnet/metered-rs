@@ -1,0 +1,39 @@
+[package]
+name = "metered-semantic"
+version = "0.10.0"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/magnet/metered-rs"
+description = """
+Method-instrumentation model for metered: semantic measuring wrappers
+(HitCount, ErrorCount, NoneCount, InFlight, Elapsed), the `#[metered]` /
+`#[error_count]` / `measure!` macros, explicit recording, and a migration
+summary view. Builds on the OpenMetrics-native `metered` core.
+"""
+keywords = ["metrics", "macro"]
+categories = ["rust-patterns", "development-tools::profiling", "asynchronous"]
+edition = "2021"
+rust-version = "1.70"
+
+[dependencies]
+metered = { version = "0.10.0", path = "../metered" }
+metered-macro = { version = "0.10.0", path = "../metered-macro" }
+# `parking_lot::Mutex` backs the migration module's `SummaryWindow` baseline.
+parking_lot = "0.12"
+
+[features]
+# no features by default
+default = []
+
+# Explicit operation recording for code that does not use tracing spans
+# (the `recording` module: `Operation` and friends).
+recording = []
+
+# Migration mode: expose a legacy summary shape (pre-computed quantiles) derived
+# from a native histogram, alongside the native histogram, so dashboards can be
+# migrated without a flag day (the `migration` module).
+migration = []
+
+# Ambient, thread-local exemplar context, forwarded to the `metered` core so
+# `Elapsed<ThreadLocalExemplars>` can wire exemplars to the active trace.
+exemplar-context = ["metered/exemplar-context"]
