@@ -26,6 +26,7 @@ metered = { path = "../metered" }
 # The semantic model is what `#[metered]` / `#[error_count]` generate code for,
 # so the macro doctests exercise it. Dev-only edge (cycle allowed by Cargo).
 metered-semantic = { path = "../metered-semantic" }
+metered-om = { path = "../metered-om" }
 thiserror = "1.0"
 rand = "0.8"
 

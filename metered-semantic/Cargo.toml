@@ -21,6 +21,12 @@ metered-macro = { version = "0.10.0", path = "../metered-macro" }
 # `parking_lot::Mutex` backs the migration module's `SummaryWindow` baseline.
 parking_lot = "0.12"
 
+[dev-dependencies]
+# The OpenMetrics sink, used to exercise text exposition in tests and doctests.
+# This dev-only edge mirrors the `metered` -> `metered-om` -> `metered` cycle
+# Cargo already allows; it never affects downstream builds.
+metered-om = { version = "0.10.0", path = "../metered-om" }
+
 [features]
 # no features by default
 default = []

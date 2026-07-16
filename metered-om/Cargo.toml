@@ -1,0 +1,39 @@
+[package]
+name = "metered-om"
+version = "0.10.0"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/magnet/metered-rs"
+description = """
+OpenMetrics text exposition (encoder, incremental renderer, parser) for the
+metered crate. The instrumentation core lives in `metered`; this crate is one
+sink a service can choose.
+"""
+keywords = ["metrics", "openmetrics", "prometheus"]
+categories = ["development-tools::profiling"]
+edition = "2021"
+rust-version = "1.70"
+
+[dependencies]
+bytes = "1"
+metered = { version = "0.10.0", path = "../metered" }
+# Non-poisoning mutex for the scrape-path snapshot cache: a panic while a
+# snapshot is being rendered must not poison the lock and turn every subsequent
+# scrape into an `.expect` panic.
+parking_lot = "0.12"
+http-body-util = { version = "0.1", optional = true }
+hyper = { version = "1", optional = true, default-features = false, features = ["http1", "server"] }
+
+[dev-dependencies]
+# The semantic measuring wrappers and the migration module are exercised by this
+# crate's rendering tests. The `migration` feature is always enabled on the
+# dev-dep so `metered_semantic::migration` is available; the crate's own
+# `migration` feature below gates which test file compiles.
+metered-semantic = { version = "0.10.0", path = "../metered-semantic", features = ["migration"] }
+tokio = { version = "1", features = ["macros", "rt"] }
+
+[features]
+# Gates the dual-shape (native + legacy summary) rendering test on the
+# `metered-semantic` migration module.
+migration = []
+hyper-1 = ["dep:hyper", "dep:http-body-util"]

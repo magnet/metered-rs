@@ -25,6 +25,11 @@ arc-swap = "1"
 rand = "0.8"
 proptest = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+# The OpenMetrics sink lives in its own crate; the core crate only needs it to
+# exercise the text exposition in its own tests, doctests, and examples. This is
+# a dev-only dependency edge, so the `metered` -> `metered-om` -> `metered`
+# cycle is allowed by Cargo (and never affects downstream builds).
+metered-om = { path = "../metered-om", version = "0.10.0" }
 
 [features]
 # no features by default
