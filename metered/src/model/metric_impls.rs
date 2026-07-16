@@ -5,6 +5,8 @@
 //! atomics. Each maps a value type to a [`MetricType`] and sample set; the
 //! concrete wire encoders live in their own crates (e.g. `metered-om`).
 
+use crate::bucket_histogram::BucketHistogram;
+use crate::exponential_histogram::{DynamicExponentialHistogram, FixedExponentialHistogram};
 use crate::labels::slices::with_labels;
 use crate::metric_tree::{Metric, MetricType};
 use crate::primitives::{
@@ -123,5 +125,47 @@ impl Metric for StateSet {
     fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
         let all = with_labels(labels, [(name, "")]);
         schema.add_family(name, self.metric_type(), &all);
+    }
+}
+
+impl Metric for BucketHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        values.histogram(name, labels, &self.snapshot());
+    }
+}
+
+impl Metric for FixedExponentialHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        // Carry the native snapshot whole; the sink renders it as `le`
+        // (cumulative) or `vmrange` (non-cumulative) as configured.
+        values.exponential_histogram(name, labels, &self.snapshot());
+    }
+}
+
+impl Metric for DynamicExponentialHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        values.exponential_histogram(name, labels, &self.snapshot());
+    }
+
+    // The off-hot-path downscale and exemplar-window reset are driven by the
+    // registry's scrape-time `housekeep` sweep (or a user maintenance task).
+    fn needs_housekeep(&self) -> bool {
+        DynamicExponentialHistogram::needs_housekeep(self)
+    }
+
+    fn housekeep(&self) {
+        DynamicExponentialHistogram::housekeep(self)
     }
 }

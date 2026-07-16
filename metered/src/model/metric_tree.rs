@@ -401,3 +401,139 @@ pub trait MetricTreeExt: MetricTree {
 
 impl<T: MetricTree + ?Sized> MetricTreeExt for T {}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bucket_histogram::BucketHistogram;
+    use crate::{InfoMetric, StateSet};
+    use std::sync::atomic::{AtomicI64, AtomicU64};
+
+    #[test]
+    fn describe_metric_impls_cover_core_types() {
+        let mut schema = MetricSchema::new();
+        AtomicU64::new(0).describe("requests", &[], &mut schema);
+        AtomicI64::new(0).describe("depth", &[], &mut schema);
+        InfoMetric::new([("version", "1")]).describe("build", &[], &mut schema);
+        let states = StateSet::new(["starting", "running"]);
+        states.describe("state", &[], &mut schema);
+        BucketHistogram::default().describe("latency", &[], &mut schema);
+
+        assert_eq!(
+            schema.family("requests").unwrap().metric_type,
+            MetricType::Counter
+        );
+        assert_eq!(
+            schema.family("depth").unwrap().metric_type,
+            MetricType::Gauge
+        );
+        assert_eq!(
+            schema.family("build").unwrap().metric_type,
+            MetricType::Info
+        );
+        assert_eq!(
+            schema.family("state").unwrap().metric_type,
+            MetricType::StateSet
+        );
+        assert_eq!(
+            schema.family("latency").unwrap().metric_type,
+            MetricType::Histogram
+        );
+    }
+
+    #[test]
+    fn option_some_forwards_like_inner_and_none_is_a_noop() {
+        use crate::Counter;
+
+        // `Some(metric)` describes and collects identically to the bare metric.
+        let bare = AtomicU64::new(0);
+        Counter::incr(&bare);
+        let mut bare_schema = MetricSchema::new();
+        bare.describe("requests", &[], &mut bare_schema);
+        let mut bare_values = MetricValues::new();
+        bare.collect("requests", &[], &mut bare_values);
+
+        let some = Some({
+            let metric = AtomicU64::new(0);
+            Counter::incr(&metric);
+            metric
+        });
+        let mut some_schema = MetricSchema::new();
+        some.describe("requests", &[], &mut some_schema);
+        let mut some_values = MetricValues::new();
+        some.collect("requests", &[], &mut some_values);
+
+        let family_shape = |schema: &MetricSchema| {
+            schema
+                .families()
+                .iter()
+                .map(|family| (family.name.clone(), family.metric_type))
+                .collect::<Vec<_>>()
+        };
+        let sample_shape = |values: &MetricValues| {
+            values
+                .samples()
+                .iter()
+                .map(|sample| (sample.name.clone(), sample.value))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(family_shape(&some_schema), family_shape(&bare_schema));
+        assert_eq!(sample_shape(&some_values), sample_shape(&bare_values));
+        assert!(!some_values.samples().is_empty());
+
+        // `None` contributes zero families and zero samples.
+        let none: Option<AtomicU64> = None;
+        let mut none_schema = MetricSchema::new();
+        none.describe("requests", &[], &mut none_schema);
+        let mut none_values = MetricValues::new();
+        none.collect("requests", &[], &mut none_values);
+        assert!(none_schema.families().is_empty());
+        assert!(none_values.samples().is_empty());
+        assert!(!none.needs_housekeep());
+        none.housekeep();
+    }
+
+    #[test]
+    fn arc_forwards_like_the_inner_tree() {
+        use crate::Counter;
+        use std::sync::Arc;
+
+        // A bare metric and the same metric behind an `Arc` describe and
+        // collect identically -- so an `Arc<T>` handle can flatten transparently
+        // into a derived tree.
+        let bare = AtomicU64::new(0);
+        Counter::incr(&bare);
+        let mut bare_schema = MetricSchema::new();
+        bare.describe("requests", &[], &mut bare_schema);
+        let mut bare_values = MetricValues::new();
+        bare.collect("requests", &[], &mut bare_values);
+
+        let shared = Arc::new({
+            let metric = AtomicU64::new(0);
+            Counter::incr(&metric);
+            metric
+        });
+        let mut shared_schema = MetricSchema::new();
+        shared.describe("requests", &[], &mut shared_schema);
+        let mut shared_values = MetricValues::new();
+        shared.collect("requests", &[], &mut shared_values);
+
+        let family_names = |schema: &MetricSchema| {
+            schema
+                .families()
+                .iter()
+                .map(|family| (family.name.clone(), family.metric_type))
+                .collect::<Vec<_>>()
+        };
+        let sample_values = |values: &MetricValues| {
+            values
+                .samples()
+                .iter()
+                .map(|sample| (sample.name.clone(), sample.value))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(family_names(&shared_schema), family_names(&bare_schema));
+        assert_eq!(sample_values(&shared_values), sample_values(&bare_values));
+        assert!(!shared.needs_housekeep());
+        shared.housekeep();
+    }
+}

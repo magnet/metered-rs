@@ -84,7 +84,9 @@ pub use model::handle;
 pub use model::{meta, metric_tree, schema, shape, values};
 
 // Instruments: the OpenMetrics metric types and the `Histogram` trait over them.
-pub use instruments::primitives;
+pub use instruments::{
+    bucket_histogram, exponential_histogram, gauge_histogram, histogram, primitives,
+};
 
 // ---- Public API: re-exported in the same layers as the modules above.
 // (`doc(no_inline)` keeps each item documented under its module page, as it
@@ -98,9 +100,24 @@ pub use metric_tree::{join_name, Metric, MetricTree, MetricTreeExt, MetricTreeMe
 #[doc(no_inline)]
 pub use schema::{MetricFamilySchema, MetricSchema, SchemaError};
 #[doc(no_inline)]
-pub use values::{MetricExemplar, MetricSample, MetricSampleValue, MetricValues};
+pub use values::{
+    HistogramData, HistogramValue, MetricExemplar, MetricSample, MetricSampleValue, MetricValues,
+};
 
 // Instruments.
+#[doc(no_inline)]
+pub use bucket_histogram::{BucketHistogram, Buckets, Exemplar, ExemplarSource, NoExemplars};
+#[doc(no_inline)]
+pub use exponential_histogram::{
+    DynamicExponentialHistogram, ExponentialSnapshot, FixedExponentialHistogram,
+    FixedHistogramError,
+};
+#[doc(no_inline)]
+pub use gauge_histogram::{
+    GaugeBucket, GaugeBuckets, GaugeHistogram, GaugeHistogramSnapshot, GaugeHistogramSource,
+};
+#[doc(no_inline)]
+pub use histogram::{ExponentialHistogram, Histogram};
 #[doc(no_inline)]
 pub use primitives::{
     AsCounter, AsGauge, Counter, CounterSource, Gauge, GaugeSource, Info, InfoMetric, Labels,
