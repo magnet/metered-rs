@@ -1,0 +1,27 @@
+[package]
+name = "metered-tracing"
+version = "0.10.0-rc.1"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+readme = "../README.md"
+repository = "https://github.com/magnet/metered-rs"
+description = "Tracing subscriber layers that export span telemetry as metered MetricTree values."
+edition = "2024"
+rust-version = "1.85"
+
+[features]
+default = []
+# Ambient exemplar context while spans are entered (`TracingExemplarLayer`, `with_exemplar`).
+exemplar = ["metered/exemplar-context"]
+
+[dependencies]
+metered = { package = "metered-core", version = "0.10.0-rc.1", path = "../metered-core" }
+metered-macro = { version = "0.10.0-rc.1", path = "../metered-macro" }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
+
+[dev-dependencies]
+metered = { package = "metered-core", version = "0.10.0-rc.1", path = "../metered-core", features = ["exemplar-context"] }
+metered-om = { version = "0.10.0-rc.1", path = "../metered-om" }
+metered-tracing = { path = ".", features = ["exemplar"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
