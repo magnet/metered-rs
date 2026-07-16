@@ -4,8 +4,7 @@
 //! and [`GaugeSource`] are the read-only sides exposition samples from, while
 //! [`Counter`] and [`Gauge`] extend them with mutation for values the metric
 //! owner may actually move. The standard atomics (`AtomicU64`, `AtomicI64`)
-//! and metered's semantic wrappers (`HitCount`, `ErrorCount`, `NoneCount`,
-//! `InFlight`) implement the full instrument traits; read-only adapters over
+//! implement the full instrument traits; read-only adapters over
 //! application state ([`crate::adapter`]) implement only the source side, so
 //! they can never be handed out where mutation is expected. A service with its
 //! own counter or gauge type implements the narrow trait it can honor, while
@@ -22,5 +21,5 @@ mod stateset;
 
 pub use counter::{AsCounter, Counter, CounterSource};
 pub use gauge::{AsGauge, Gauge, GaugeSource};
-pub use info::{Info, InfoMetric, Labels};
+pub use info::{AsInfo, Info, InfoMetric, Labels};
 pub use stateset::StateSet;

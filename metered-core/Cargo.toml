@@ -15,6 +15,10 @@ rust-version = "1.85"
 
 [dependencies]
 parking_lot = "0.12"
+# Lock-free atomic Arc swap, used by `DynamicExponentialHistogram` for RCU-style
+# schema downscaling: observers load the current table lock-free, the
+# off-hot-path maintenance task swaps in a coarser one.
+arc-swap = "1"
 
 [dev-dependencies]
 rand = "0.8"
@@ -24,5 +28,15 @@ serde = { version = "1.0", features = ["derive"] }
 [features]
 # no features by default
 default = []
+
+# Ambient, thread-local exemplar context (`ThreadLocalExemplars` +
+# `set_current_exemplar` / `with_exemplar`). Opt-in because it relies on ambient
+# state; lets a tracing layer wire exemplars to the active trace with no
+# tracing/OpenTelemetry dependency in metered itself.
+exemplar-context = []
+
+[[bench]]
+name = "histogram_backends"
+harness = false
 
 

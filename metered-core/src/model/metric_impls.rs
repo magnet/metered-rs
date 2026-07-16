@@ -5,14 +5,16 @@
 //! atomics. Each maps a value type to a [`MetricType`] and sample set; the
 //! concrete wire encoders live in their own crates (e.g. `metered-om`).
 
+use crate::Scalar;
+use crate::bucket_histogram::BucketHistogram;
+use crate::exponential_histogram::{DynamicExponentialHistogram, FixedExponentialHistogram};
 use crate::labels::slices::with_labels;
 use crate::metric_tree::{Metric, MetricType};
 use crate::primitives::{
-    AsCounter, AsGauge, CounterSource, GaugeSource, Info, InfoMetric, StateSet,
+    AsCounter, AsGauge, AsInfo, CounterSource, GaugeSource, Info, InfoMetric, StateSet,
 };
 use crate::schema::MetricSchema;
 use crate::values::MetricValues;
-use crate::Scalar;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, AtomicUsize, Ordering};
 
 impl Metric for AtomicBool {
@@ -106,6 +108,36 @@ impl Metric for InfoMetric {
     }
 }
 
+impl<T: Info> Metric for AsInfo<T> {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Info
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        let info_labels = Info::labels(&self.0);
+        let all = with_labels(
+            labels,
+            info_labels
+                .as_slice()
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str())),
+        );
+        values.sample(&format!("{name}_info"), &all, 1u64);
+    }
+
+    fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
+        let info_labels = Info::labels(&self.0);
+        let all = with_labels(
+            labels,
+            info_labels
+                .as_slice()
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str())),
+        );
+        schema.add_family(name, MetricType::Info, &all);
+    }
+}
+
 impl Metric for StateSet {
     fn metric_type(&self) -> MetricType {
         MetricType::StateSet
@@ -123,5 +155,64 @@ impl Metric for StateSet {
     fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
         let all = with_labels(labels, [(name, "")]);
         schema.add_family(name, self.metric_type(), &all);
+    }
+}
+
+impl Metric for BucketHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        values.histogram(name, labels, &self.snapshot());
+    }
+}
+
+impl Metric for FixedExponentialHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        // Carry the native snapshot whole; the sink renders it as `le`
+        // (cumulative) or `vmrange` (non-cumulative) as configured.
+        values.exponential_histogram(name, labels, &self.snapshot());
+    }
+
+    fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
+        schema.add_family(name, self.metric_type(), labels);
+        // A fixed layout is shared by every series of the family, so classic
+        // cumulative `le` aggregation is sound — declare it explicitly.
+        schema.set_render_for(name, crate::HistogramRender::Le);
+    }
+}
+
+impl Metric for DynamicExponentialHistogram {
+    fn metric_type(&self) -> MetricType {
+        MetricType::Histogram
+    }
+
+    fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
+        values.exponential_histogram(name, labels, &self.snapshot());
+    }
+
+    fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
+        schema.add_family(name, self.metric_type(), labels);
+        // Every series rescales its layout independently, so cumulative `le`
+        // buckets are NOT aggregation-sound across series
+        // (`sum by (le)` merges mismatched lattices). Non-cumulative
+        // `vmrange` buckets carry their bounds and merge correctly; declare
+        // them so a vmrange-capable sink renders the sound form.
+        schema.set_render_for(name, crate::HistogramRender::VmRange);
+    }
+
+    // The off-hot-path downscale and exemplar-window reset are driven by the
+    // registry's scrape-time `housekeep` sweep (or a user maintenance task).
+    fn needs_housekeep(&self) -> bool {
+        DynamicExponentialHistogram::needs_housekeep(self)
+    }
+
+    fn housekeep(&self) {
+        DynamicExponentialHistogram::housekeep(self)
     }
 }
