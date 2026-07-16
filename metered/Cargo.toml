@@ -1,38 +1,45 @@
 [package]
 name = "metered"
-version = "0.9.0"
+version = "0.10.0-rc.1"
 authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
 license = "Apache-2.0 OR MIT"
 readme = "../README.md"
 keywords = ["metrics", "macro"]
 repository = "https://github.com/magnet/metered-rs"
 description = """
-Fast, ergonomic metrics for Rust!
+Fast, ergonomic metrics for Rust! The one-dependency facade over the metered
+workspace: the core model re-exported wholesale, satellite crates behind
+features.
 """
 categories = ["rust-patterns", "development-tools::profiling", "data-structures", "algorithms", "asynchronous"]
-edition = "2018"
+edition = "2024"
+rust-version = "1.85"
 
 [dependencies]
-metered-macro = { version = "0.9.0", path = "../metered-macro" }
-aspect = "0.3"
-hdrhistogram = "7.5"
-atomic = "0.5"
-parking_lot = "0.12"
-serde = { version = "1.0", features = ["derive"] }
-cfg-if = "1.0.0"
+metered-core = { version = "0.10.0-rc.1", path = "../metered-core" }
+metered-macro = { version = "0.10.0-rc.1", path = "../metered-macro" }
+metered-om = { version = "0.10.0-rc.1", path = "../metered-om", optional = true }
+metered-tracing = { version = "0.10.0-rc.1", path = "../metered-tracing", optional = true }
+metered-telemetry-tokio = { version = "0.10.0-rc.1", path = "../metered-telemetry-tokio", optional = true }
+metered-telemetry-process = { version = "0.10.0-rc.1", path = "../metered-telemetry-process", optional = true }
+metered-telemetry-system = { version = "0.10.0-rc.1", path = "../metered-telemetry-system", optional = true }
 
 [dev-dependencies]
-rand = "0.8"
-proptest = "1.0"
+metered-om = { version = "0.10.0-rc.1", path = "../metered-om" }
 
 [features]
 # no features by default
 default = []
 
-# Use the serde feature to make metered' types implement Serialize
-serialize = []
+# Ambient, thread-local exemplar context in the core model.
+exemplar-context = ["metered-core/exemplar-context"]
 
-# When enabled, the error count macro will skip serializing cleared entries (e.g counters with value 0)
-# This can be overridden with the `skip_cleared` macro attribute
-error-count-skip-cleared-by-default = ["metered-macro/error-count-skip-cleared-by-default"]
+# Satellite crates, re-exported as facade modules.
+om = ["dep:metered-om"]
+tracing = ["dep:metered-tracing"]
+telemetry-tokio = ["dep:metered-telemetry-tokio"]
+telemetry-process = ["dep:metered-telemetry-process"]
+telemetry-system = ["dep:metered-telemetry-system"]
 
+# Everything at once.
+full = ["om", "tracing", "telemetry-tokio", "telemetry-process", "telemetry-system", "exemplar-context"]

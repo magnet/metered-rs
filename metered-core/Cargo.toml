@@ -1,0 +1,28 @@
+[package]
+name = "metered-core"
+version = "0.10.0-rc.1"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+readme = "../README.md"
+keywords = ["metrics", "macro"]
+repository = "https://github.com/magnet/metered-rs"
+description = """
+Fast, ergonomic metrics for Rust!
+"""
+categories = ["rust-patterns", "development-tools::profiling", "data-structures", "algorithms", "asynchronous"]
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+parking_lot = "0.12"
+
+[dev-dependencies]
+rand = "0.8"
+proptest = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[features]
+# no features by default
+default = []
+
+
