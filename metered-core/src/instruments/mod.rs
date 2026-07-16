@@ -7,3 +7,4 @@ pub mod exponential_histogram;
 pub mod gauge_histogram;
 pub mod histogram;
 pub mod primitives;
+pub mod summary;

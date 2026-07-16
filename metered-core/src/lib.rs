@@ -77,7 +77,7 @@ pub use model::{meta, metric_tree, schema, shape, values};
 
 // Instruments: the OpenMetrics metric types and the `Histogram` trait over them.
 pub use instruments::{
-    bucket_histogram, exponential_histogram, gauge_histogram, histogram, primitives,
+    bucket_histogram, exponential_histogram, gauge_histogram, histogram, primitives, summary,
 };
 
 // ---- Public API: re-exported in the same layers as the modules above.
@@ -115,6 +115,8 @@ pub use primitives::{
     AsCounter, AsGauge, Counter, CounterSource, Gauge, GaugeSource, Info, InfoMetric, Labels,
     StateSet,
 };
+#[doc(no_inline)]
+pub use summary::{QuantileSource, Summary, SummaryReading};
 
 // Composition.
 #[doc(no_inline)]
