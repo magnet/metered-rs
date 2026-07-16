@@ -4,5 +4,6 @@ members = [
   "metered",
   "metered-semantic",
   "metered-macro",
+  "metered-tracing",
   "metered-om",
 ]

@@ -14,6 +14,7 @@ extern crate quote;
 // `#[metric]` / `#[metrics]` attribute parser they (and the legacy macros) use.
 mod derive;
 mod metric_attr;
+mod span_metric;
 
 // Legacy method-instrumentation macros (`#[metered]` / `#[measure]` /
 // `#[error_count]`) for `metered-semantic`. Self-contained and scheduled for
@@ -197,4 +198,44 @@ pub fn derive_metric_tree(input: TokenStream) -> TokenStream {
 pub fn error_count(attrs: TokenStream, item: TokenStream) -> TokenStream {
     legacy::error_count::error_count(attrs, item)
         .unwrap_or_else(|e| TokenStream::from(e.to_compile_error()))
+}
+
+/// Derives the span/metric wiring for a typed labels struct.
+///
+/// Re-exported as `metered_tracing::SpanLabels`; see that crate for usage. Pair
+/// it with `#[derive(LabelSet)]`: the struct fields are the OpenMetrics labels
+/// (their types are enforced), and `#[span("otel.field")]` maps each to the
+/// OpenTelemetry semconv span field it reads from. Generates `FromSpanFields`
+/// (parsing each value with `FromStr`), the `@open` arm reached through
+/// `metered_info_span!`, typed `record_*` setters for `on_close` fields, and
+/// `SPAN` / `HELP` consts -- so the emitted span field and the metric label,
+/// keyed by the same struct, cannot drift. The metrics themselves are normal
+/// `metered` families you own (a counter you bump, a duration histogram a
+/// `SpanDurations` adapter times).
+///
+/// Each field type must be `FromStr + Default` (`Default` is the last-resort
+/// fallback when a span omits the field; `from_span_fields` never panics).
+/// Generated code reaches `tracing` through `metered_tracing`'s re-export, so a
+/// deriving crate needs no direct `tracing` dependency.
+///
+/// The `@open` macro is `#[macro_export]`ed under the labels type's name, so it
+/// is reachable from any module (and before its definition), not only where the
+/// struct is declared.
+///
+/// ```ignore
+/// #[derive(Clone, PartialEq, Eq, Hash, metered::LabelSet, metered_tracing::SpanLabels)]
+/// #[span(name = "rpc.server", help = "RPC server calls")]
+/// struct RpcLabels {
+///     #[span("rpc.method")]
+///     rpc_method: String,
+///     #[span("rpc.grpc.status_code", default = "OK", on_close)]
+///     rpc_status: String, // any T: FromStr + Display + Default
+/// }
+///
+/// let span = metered_info_span!(RpcLabels; rpc_method = "CreateOrder".to_owned());
+/// RpcLabels::record_rpc_status(&span, "OK".to_owned());
+/// ```
+#[proc_macro_derive(SpanLabels, attributes(span))]
+pub fn derive_span_labels(input: TokenStream) -> TokenStream {
+    span_metric::span_labels(input)
 }
