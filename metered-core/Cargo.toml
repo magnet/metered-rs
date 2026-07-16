@@ -14,6 +14,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
+metered-macro = { version = "0.10.0-rc.1", path = "../metered-macro" }
 parking_lot = "0.12"
 # Lock-free atomic Arc swap, used by `DynamicExponentialHistogram` for RCU-style
 # schema downscaling: observers load the current table lock-free, the
