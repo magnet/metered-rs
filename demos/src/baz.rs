@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-use metered::{metered, ErrorCount, HitCount, InFlight, ResponseTime};
+use metered_semantic::{metered, Elapsed, ErrorCount, HitCount, InFlight};
 use thiserror::Error;
 
-#[metered::error_count(name = LibErrorCount, visibility = pub)]
+#[metered_semantic::error_count(name = LibErrorCount, visibility = pub)]
 #[derive(Debug, Error)]
 pub enum LibError {
     #[error("I failed!")]
@@ -12,7 +12,7 @@ pub enum LibError {
     BadInput,
 }
 
-#[metered::error_count(name = BazErrorCount, visibility = pub, skip_cleared = true)]
+#[metered_semantic::error_count(name = BazErrorCount, visibility = pub)]
 #[derive(Debug, Error)]
 pub enum BazError {
     #[error("lib error: {0}")]
@@ -21,15 +21,24 @@ pub enum BazError {
     Io,
 }
 
-#[derive(Default, Debug, serde::Serialize)]
+#[derive(Default, Debug)]
 pub struct Baz {
     metric_reg: BazMetricRegistry,
 }
 
-#[metered(registry = BazMetricRegistry, /* default = self.metrics */ registry_expr = self.metric_reg, visibility = pub(self))]
-#[measure(InFlight)] // Applies to all methods that have the `measure` attribute
 impl Baz {
-    // This is measured with an InFlight gauge, because it's the default on the block.
+    pub(crate) fn metric_tree(&self) -> &BazMetricRegistry {
+        &self.metric_reg
+    }
+}
+
+#[metered(
+    registry = BazMetricRegistry,
+    registry_expr = self.metric_reg,
+    visibility = pub(crate)
+)]
+#[measure(InFlight)]
+impl Baz {
     #[measure]
     pub fn bir(&self) {
         println!("bir");
@@ -37,21 +46,20 @@ impl Baz {
         std::thread::sleep(delay);
     }
 
-    // This is not measured
     pub fn bor(&self) {
         println!("bor");
     }
 
-    #[measure(ResponseTime)]
+    #[measure(Elapsed)]
     pub fn foo(&self) {
         println!("foo !");
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
         std::thread::sleep(delay);
     }
 
-    #[measure(type = HitCount<metered::atomic::AtomicInt<u64>>)]
+    #[measure(HitCount)]
     #[measure(ErrorCount)]
-    #[measure(ResponseTime)]
+    #[measure(Elapsed)]
     pub fn bar(&self, should_fail: bool) -> Result<(), &'static str> {
         if !should_fail {
             println!("bar !");
@@ -60,7 +68,8 @@ impl Baz {
             Err("I failed!")
         }
     }
-    #[measure([ErrorCount, ResponseTime])]
+
+    #[measure([ErrorCount, Elapsed])]
     pub async fn baz(&self, should_fail: bool) -> Result<(), &'static str> {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 2000);
         tokio::time::sleep(delay).await;
@@ -72,7 +81,7 @@ impl Baz {
         }
     }
 
-    #[measure([ResponseTime])]
+    #[measure([Elapsed])]
     pub fn bazium(
         &self,
         should_fail: bool,
@@ -104,7 +113,6 @@ impl Baz {
         let _ = std::str::from_utf8_unchecked(v);
     }
 
-    // This is not measured either
     pub fn bur() {
         println!("bur");
     }

@@ -9,5 +9,6 @@ members = [
   "metered-telemetry-process",
   "metered-telemetry-system",
   "metered-om",
+  "examples/order-service",
   "samples",
 ]

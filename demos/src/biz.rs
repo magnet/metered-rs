@@ -1,14 +1,13 @@
-use metered::{metered, HitCount, Throughput};
+use metered_semantic::{metered, HitCount};
 
-#[derive(Default, Debug, serde::Serialize)]
+#[derive(Default, Debug)]
 pub struct Biz {
     pub(crate) metrics: BizMetrics,
 }
 
 #[metered(registry = BizMetrics)]
-#[measure([HitCount, Throughput])]
+#[measure(HitCount)]
 impl Biz {
-    // This is measured with an Throughput metric (TPS)
     #[measure]
     pub fn biz(&self) {
         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);

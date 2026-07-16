@@ -1,15 +1,31 @@
-use metered::clear::Clear;
-use metered::*;
+use metered::{MetricTree, Registry};
+use metered_om::OpenMetricsRegistryExt;
+use metered_semantic::{measure, ErrorCount, HitCount};
+
 mod baz;
 use baz::Baz;
 mod biz;
 use biz::Biz;
-use std::collections::HashMap;
 
-#[derive(Default, Debug, serde::Serialize)]
+#[derive(Default, Debug)]
 struct TestMetrics {
     hit_count: HitCount,
     error_count: ErrorCount,
+}
+
+fn print_openmetrics(prefix: &str, tree: &impl MetricTree) {
+    let mut registry = Registry::new();
+    registry.register(
+        metered::entry::metric(prefix.to_owned())
+            .source(tree)
+            .help(format!("{prefix} metrics")),
+    );
+    println!(
+        "{}",
+        registry
+            .encode_to_string()
+            .expect("encode OpenMetrics text")
+    );
 }
 
 fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
@@ -28,8 +44,7 @@ fn test(should_fail: bool, metrics: &TestMetrics) -> Result<(), ()> {
 }
 
 fn test_incr(metrics: &TestMetrics) -> Result<(), ()> {
-    let hit_count = &metrics.hit_count;
-    hit_count.incr_by(3);
+    metrics.hit_count.incr_by(3);
     Ok(())
 }
 
@@ -46,9 +61,7 @@ async fn async_procmacro_demo(baz: Baz) {
         let _ = baz.bazle(i % 3 == 0).await;
     }
 
-    // Print the results!
-    let serialized = serde_prometheus::to_string(&baz, None, HashMap::new()).unwrap();
-    println!("{}", serialized);
+    print_openmetrics("baz", baz.metric_tree());
 }
 
 fn simple_api_demo() {
@@ -58,20 +71,31 @@ fn simple_api_demo() {
     let _ = test(true, &metrics);
     let _ = test_incr(&metrics);
 
-    // Print the results!
-    let serialized = serde_prometheus::to_string(&metrics, None, HashMap::new()).unwrap();
-    println!("{}", serialized);
+    let mut registry = Registry::with_prefix("test");
+    registry.register(
+        metered::entry::metric("hit")
+            .source(&metrics.hit_count)
+            .help("Hit count"),
+    );
+    registry.register(
+        metered::entry::metric("error")
+            .source(&metrics.error_count)
+            .help("Error count"),
+    );
+    println!(
+        "{}",
+        registry
+            .encode_to_string()
+            .expect("encode OpenMetrics text")
+    );
 }
 
 use std::sync::Arc;
 use std::thread;
 
 fn test_biz() {
-    println!("Running Biz throughput demo...(will take 20 seconds)");
+    println!("Running Biz hit-count demo...(will take a few seconds)");
     let biz = Arc::new(Biz::default());
-    do_test_biz(&biz);
-    println!("Clearing Biz metrics and running throughput demo again...(will take 20 seconds)");
-    biz.metrics.clear();
     do_test_biz(&biz);
 }
 
@@ -89,10 +113,8 @@ fn do_test_biz(biz: &Arc<Biz>) {
     for t in threads {
         t.join().unwrap();
     }
-    println!("Running Biz throughput demo... done! Here are the metrics for that run:");
-    // Print the results!
-    let serialized = serde_prometheus::to_string(&**biz, None, HashMap::new()).unwrap();
-    println!("{}", serialized);
+    println!("Running Biz hit-count demo... done! OpenMetrics output:");
+    print_openmetrics("biz", &biz.metrics);
 }
 
 fn main() {
