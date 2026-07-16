@@ -80,6 +80,9 @@ pub use instruments::{
     bucket_histogram, exponential_histogram, gauge_histogram, histogram, primitives, summary,
 };
 
+// Composition: labelled families and cardinality control.
+pub use labels::{family, interner};
+
 // ---- Public API: re-exported in the same layers as the modules above.
 // (`doc(no_inline)` keeps each item documented under its module page, as it
 // was when the modules were declared at the crate root.) ----
@@ -119,6 +122,10 @@ pub use primitives::{
 pub use summary::{QuantileSource, Summary, SummaryReading};
 
 // Composition.
+#[doc(no_inline)]
+pub use family::{Family, LabelSet};
+#[doc(no_inline)]
+pub use interner::BoundedValues;
 #[doc(no_inline)]
 pub use shape::{Flatten, Renamed};
 

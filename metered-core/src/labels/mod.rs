@@ -2,3 +2,6 @@
 //! helpers.
 
 pub(crate) mod slices;
+
+pub mod family;
+pub mod interner;
