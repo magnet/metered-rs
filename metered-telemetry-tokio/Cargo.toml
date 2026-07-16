@@ -1,0 +1,21 @@
+[package]
+name = "metered-telemetry-tokio"
+version = "0.10.0"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/magnet/metered-rs"
+description = "Tokio runtime and task telemetry as metered MetricTree values."
+edition = "2021"
+rust-version = "1.70"
+
+[dependencies]
+metered = { version = "0.10.0", path = "../metered" }
+tokio = { version = "1", features = ["rt"] }
+tokio-metrics = "0.3"
+
+[dev-dependencies]
+metered-om = { version = "0.10.0", path = "../metered-om" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable)'] }
