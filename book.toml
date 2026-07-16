@@ -1,0 +1,18 @@
+[book]
+title = "Metered"
+authors = ["Simon Chemouil"]
+description = "OpenMetrics-native metrics for Rust"
+src = "docs/src"
+language = "en"
+
+[output.html]
+git-repository-url = "https://github.com/magnet/metered-rs"
+# Points at the release-candidate branch while 0.10 is in review; flip back
+# to master when metered-v2 merges.
+edit-url-template = "https://github.com/magnet/metered-rs/edit/metered-v2/{path}"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

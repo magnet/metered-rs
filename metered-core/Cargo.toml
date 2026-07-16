@@ -32,9 +32,9 @@ proptest = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 # The OpenMetrics sink lives in its own crate; the core crate only needs it to
 # exercise the text exposition in its own tests, doctests, and examples. This is
-# a dev-only dependency edge, so the `metered` -> `metered-om` -> `metered`
-# cycle is allowed by Cargo (and never affects downstream builds).
-metered-om = { path = "../metered-om", version = "0.10.0-rc.1" }
+# a path-only (stripped at publish) edge so `metered-core` can publish before
+# `metered-om` without a crates.io cycle — same rationale as the facade above.
+metered-om = { path = "../metered-om" }
 
 [features]
 # no features by default

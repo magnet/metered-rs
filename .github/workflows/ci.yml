@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run clippy
+        run: cargo clippy-all
+      # `samples/` is a workspace member compiling every sample file, so the
+      # build/test/clippy steps fail if a sample teaches a removed API.
+      - name: Test all features
+        run: cargo test --workspace --all-features
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Enforce core line coverage >= 90%
+        run: >
+          cargo llvm-cov
+          --workspace
+          --all-features
+          --summary-only
+          --fail-under-lines 90
+          --ignore-filename-regex 'metered-macro|examples|samples'
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.85"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95"
+      # The workspace resolve always contains sysinfo (rustc >= 1.95), so the
+      # 1.85 floor is proven per crate with cargo's resolve-wide version gate
+      # skipped: actually compiling on the 1.85 toolchain is the check.
+      - name: Check the 1.85 floor (every crate except telemetry-system)
+        run: >
+          cargo +1.85 check
+          -p metered-core -p metered-macro -p metered-om -p metered-tracing
+          -p metered-telemetry-tokio -p metered-telemetry-process
+          --all-targets --all-features --ignore-rust-version
+      - name: Check the 1.85 floor (facade, sans telemetry-system)
+        run: >
+          cargo +1.85 check -p metered --all-targets --ignore-rust-version
+          --features om,tracing,telemetry-tokio,telemetry-process,exemplar-context
+      - name: Check the 1.95 floor (telemetry-system)
+        run: cargo +1.95 check -p metered-telemetry-system --all-targets --all-features
