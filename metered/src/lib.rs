@@ -149,3 +149,6 @@ pub use registry::{entry, MetricTreeView, MetricsView, Registry};
 // Exposition.
 pub use query::{Query, QueryDialect};
 pub use sink::MetricSink;
+
+// Derive macros sharing names with the traits they implement (like serde).
+pub use metered_macro::{LabelSet, MetricTree};
