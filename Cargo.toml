@@ -6,5 +6,6 @@ members = [
   "metered-macro",
   "metered-tracing",
   "metered-telemetry-tokio",
+  "metered-telemetry-process",
   "metered-om",
 ]

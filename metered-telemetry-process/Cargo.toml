@@ -1,0 +1,16 @@
+[package]
+name = "metered-telemetry-process"
+version = "0.10.0"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/magnet/metered-rs"
+description = "Standard process telemetry (CPU, memory, file descriptors) as metered MetricTree values."
+edition = "2021"
+rust-version = "1.70"
+
+[dependencies]
+metered = { version = "0.10.0", path = "../metered" }
+metrics-process = { version = "2.4.3", default-features = false }
+
+[dev-dependencies]
+metered-om = { version = "0.10.0", path = "../metered-om" }
