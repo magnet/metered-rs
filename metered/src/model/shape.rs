@@ -110,3 +110,30 @@ impl<M: ?Sized + MetricTree> MetricTree for Flatten<'_, M> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicU64;
+
+    // The rendered effect of `Renamed`/`Flatten` on series names is tested in
+    // `metered-om/tests/render_trees.rs`; here we assert the schema and
+    // values stay in lockstep, which is the core invariant these adaptors keep.
+
+    #[test]
+    fn renamed_and_flatten_keep_schema_and_values_in_lockstep() {
+        let hits = AtomicU64::new(0);
+        crate::Counter::incr(&hits);
+        let renamed = Renamed::new("requests", &hits);
+
+        let mut schema = MetricSchema::new();
+        renamed.describe("api", &[], &mut schema);
+        let mut values = MetricValues::new();
+        renamed.collect("api", &[], &mut values);
+
+        assert!(schema.family("api_requests").is_some());
+        assert!(values
+            .samples()
+            .iter()
+            .all(|sample| sample.name.starts_with("api_requests")));
+    }
+}

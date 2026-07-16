@@ -67,6 +67,7 @@
 // `labels`), which are private: every public module inside them is re-exported
 // at the crate root below, so the crate's public module paths stay flat and
 // unchanged. (rustfmt keeps each blank-line-separated group sorted.)
+mod instruments;
 mod labels;
 mod model;
 
@@ -82,6 +83,9 @@ pub mod sink;
 pub use model::handle;
 pub use model::{meta, metric_tree, schema, shape, values};
 
+// Instruments: the OpenMetrics metric types and the `Histogram` trait over them.
+pub use instruments::primitives;
+
 // ---- Public API: re-exported in the same layers as the modules above.
 // (`doc(no_inline)` keeps each item documented under its module page, as it
 // was when the modules were declared at the crate root.) ----
@@ -95,6 +99,13 @@ pub use metric_tree::{join_name, Metric, MetricTree, MetricTreeExt, MetricTreeMe
 pub use schema::{MetricFamilySchema, MetricSchema, SchemaError};
 #[doc(no_inline)]
 pub use values::{MetricExemplar, MetricSample, MetricSampleValue, MetricValues};
+
+// Instruments.
+#[doc(no_inline)]
+pub use primitives::{
+    AsCounter, AsGauge, Counter, CounterSource, Gauge, GaugeSource, Info, InfoMetric, Labels,
+    StateSet,
+};
 
 // Composition.
 #[doc(no_inline)]

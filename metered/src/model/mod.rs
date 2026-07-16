@@ -1,6 +1,8 @@
 //! The metric-tree model: the core traits, metadata, schema/values pair, and
 //! tree shaping.
 
+mod metric_impls;
+
 pub mod handle;
 pub mod meta;
 pub mod metric_tree;
