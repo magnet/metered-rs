@@ -1,0 +1,32 @@
+[package]
+name = "metered-om"
+version = "0.10.0-rc.1"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+readme = "../README.md"
+repository = "https://github.com/magnet/metered-rs"
+description = """
+OpenMetrics text exposition (encoder, incremental renderer, parser) for the
+metered crate. The instrumentation core lives in `metered`; this crate is one
+sink a service can choose.
+"""
+keywords = ["metrics", "openmetrics", "prometheus"]
+categories = ["development-tools::profiling"]
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+bytes = "1"
+metered = { package = "metered-core", version = "0.10.0-rc.1", path = "../metered-core" }
+# Non-poisoning mutex for the scrape-path snapshot cache: a panic while a
+# snapshot is being rendered must not poison the lock and turn every subsequent
+# scrape into an `.expect` panic.
+parking_lot = "0.12"
+http-body-util = { version = "0.1", optional = true }
+hyper = { version = "1", optional = true, default-features = false, features = ["http1", "server"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+
+[features]
+hyper-1 = ["dep:hyper", "dep:http-body-util"]

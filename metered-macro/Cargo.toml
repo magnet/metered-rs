@@ -7,7 +7,8 @@ readme = "../README.md"
 keywords = ["metrics", "macro"]
 repository = "https://github.com/magnet/metered-rs"
 description = """
-Fast, ergonomic metrics for Rust!
+The derive macros of the metered metric library (MetricTree, LabelSet,
+SpanLabels), consumed through the `metered` and `metered-tracing` re-exports.
 """
 categories = ["rust-patterns", "development-tools::profiling", "data-structures", "algorithms", "asynchronous"]
 edition = "2024"
@@ -19,7 +20,8 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 [dev-dependencies]
-metered = { path = "../metered-core", package = "metered-core" }
+metered = { package = "metered-core", path = "../metered-core" }
+metered-om = { path = "../metered-om" }
 
 [lib]
 proc-macro = true

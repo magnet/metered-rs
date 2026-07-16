@@ -7,7 +7,8 @@ readme = "../README.md"
 keywords = ["metrics", "macro"]
 repository = "https://github.com/magnet/metered-rs"
 description = """
-Fast, ergonomic metrics for Rust!
+The core metric model of metered (state, composition, schema/values), consumed
+through the `metered` facade or directly by libraries.
 """
 categories = ["rust-patterns", "development-tools::profiling", "data-structures", "algorithms", "asynchronous"]
 edition = "2024"
@@ -22,9 +23,15 @@ parking_lot = "0.12"
 arc-swap = "1"
 
 [dev-dependencies]
+# The facade re-exports this crate wholesale, so doctests written against the
 rand = "0.8"
 proptest = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+# The OpenMetrics sink lives in its own crate; the core crate only needs it to
+# exercise the text exposition in its own tests, doctests, and examples. This is
+# a dev-only dependency edge, so the `metered` -> `metered-om` -> `metered`
+# cycle is allowed by Cargo (and never affects downstream builds).
+metered-om = { path = "../metered-om", version = "0.10.0-rc.1" }
 
 [features]
 # no features by default

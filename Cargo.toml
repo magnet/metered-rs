@@ -3,4 +3,5 @@ resolver = "2"
 members = [
   "metered-core",
   "metered-macro",
+  "metered-om",
 ]
