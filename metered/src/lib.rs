@@ -2,250 +2,103 @@
 //!
 //! Metered helps you measure the performance of your programs in production.
 //! Inspired by Coda Hale's Java metrics library, Metered makes live
-//! measurements easy by providing measurement declarative and procedural
-//! macros, and a variety of useful metrics ready out-of-the-box:
-//! * [`HitCount`]: a counter tracking how much a piece of code was hit.
-//! * [`ErrorCount`]: a counter tracking how many errors were returned -- (works
-//!   on any expression returning a std `Result`)
-//! * [`InFlight`]: a gauge tracking how many requests are active
-//! * [`ResponseTime`]: statistics backed by an HdrHistogram of the duration of
-//!   an expression
-//! * [`Throughput`]: statistics backed by an HdrHistogram of how many times an
-//!   expression is called per second.
+//! measurements easy by providing direct OpenMetrics primitives and metric-tree
+//! registries.
 //!
-//! These metrics are usually applied to methods, using provided procedural
-//! macros that generate the boilerplate.
+//! The core OpenMetrics constructs -- [`Counter`], [`Gauge`] and
+//! [`BucketHistogram`] -- are exposed directly as readable, source-of-truth
+//! values. The [`Histogram`] trait abstracts over the bucket and exponential
+//! backends.
 //!
-//! To achieve higher performance, these stock metrics can be customized to use
-//! non-thread safe (`!Sync`/`!Send`) datastructures, but they default to
-//! thread-safe datastructures implemented using lock-free strategies where
-//! possible. This is an ergonomical choice to provide defaults that work in all
-//! situations.
+//! The stock metrics are backed by lock-free atomics, so they are cheap to
+//! update, safe to share across threads, and never allocate after
+//! initialization.
 //!
-//! Metered is designed as a zero-overhead abstraction -- in the sense that the
-//! higher-level ergonomics should not cost over manually adding metrics.
-//! Notably, stock metrics will *not* allocate memory after they're initialized
-//! the first time.  However, they are triggered at every method call and it can
-//! be interesting to use lighter metrics (e.g
-//! [`HitCount`]) in hot code paths and favour
-//! heavier metrics ([`Throughput`],
-//! [`ResponseTime`]) in higher-level entry
-//! points.
+//! Metered aims to keep instrumentation overhead explicit and small. Stock
+//! metrics allocate their backing state at initialization; the hot path then
+//! records through atomics and, for metrics that must finish on completion or
+//! abort, a cheap internal handle clone. Use lighter metrics such as
+//! counters in the hottest paths and reserve richer histograms for entry points
+//! where duration buckets are worth the extra bookkeeping.
 //!
-//! If a metric you need is missing, or if you want to customize a metric (for
-//! instance, to track how many times a specific error occurs, or react
-//! depending on your return type), it is possible to implement your own metrics
-//! simply by implementing the [`Metric`] trait .
+//! If a metric you need is missing, wrap the core primitives in a newtype or
+//! implement [`Metric`] / [`MetricTree`] directly.
 //!
 //! Metered does not use statics or shared global state. Instead, it lets you
-//! either build your own metric registry using the metrics you need, or can
-//! generate a metric registry for you using method attributes. Metered will
-//! generate one registry per `impl` block annotated with the `metered`
-//! attribute, under the name provided as the `registry` parameter. By default,
-//! Metered will expect the registry to be accessed as `self.metrics` but the
-//! expression can be overridden with the `registry_expr` attribute parameter.
-//! See the demos for more examples.
+//! build your own metric registry using the metrics you need. A [`Registry`]
+//! (and any [`MetricTree`]) derives [`std::fmt::Debug`] and contributes schema
+//! and values through the same core model as handwritten trees. A sink crate
+//! such as `metered-om` renders that schema/value pair as OpenMetrics text.
 //!
-//! Metered will generate metric registries that derive [`std::fmt::Debug`] and
-//! [`serde::Serialize`] to extract your metrics easily. Metered generates one
-//! sub-registry per method annotated with the `measure` attribute, hence
-//! organizing metrics hierarchically. This ensures access time to metrics in
-//! generated registries is always constant (and, when possible,
-//! cache-friendly), without any overhead other than the metric itself.
+//! To publish to Prometheus, encode a [`Registry`] (or any [`MetricTree`]) with
+//! a sink such as `metered-om` and expose that text over an HTTP endpoint.
 //!
-//! Metered will happily measure any method, whether it is `async` or not, and
-//! the metrics will work as expected (e.g,
-//! [`ResponseTime`] will return the completion
-//! time across `await`'ed invocations).
+//! ## Method instrumentation
 //!
-//! Metered's serialized metrics can be used in conjunction with
-//! [`serde_prometheus`](https://github.com/w4/serde_prometheus) to publish
-//! metrics to Prometheus.
+//! The method-level, *semantic* instrumentation model -- the `HitCount`,
+//! `ErrorCount`, `NoneCount`, `InFlight` and `Elapsed` measuring wrappers, the
+//! `#[metered]` / `#[error_count]` / `measure!` macros, explicit recording, and
+//! the migration summary view -- lives in the companion `metered-semantic`
+//! crate, which builds on this core.
 //!
-//! ## Example using procedural macros (recommended)
+//! ## Stability & dependency policy
 //!
-//! ```
-//! # extern crate metered;
-//! # extern crate rand;
-//!
-//! use metered::{metered, Throughput, HitCount};
-//!
-//! #[derive(Default, Debug)]
-//! pub struct Biz {
-//!     metrics: BizMetrics,
-//! }
-//!
-//! #[metered::metered(registry = BizMetrics)]
-//! impl Biz {
-//!     #[measure([HitCount, Throughput])]
-//!     pub fn biz(&self) {        
-//!         let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
-//!         std::thread::sleep(delay);
-//!     }   
-//! }
-//!
-//! # fn main() {
-//! # }
-//! ```
-//!
-//! In the snippet above, we will measure the
-//! [`HitCount`] and
-//! [`Throughput`] of the `biz` method.
-//!
-//! This works by first annotating the `impl` block with the `metered`
-//! annotation and specifying the name Metered should give to the metric
-//! registry (here `BizMetrics`). Later, Metered will assume the expression to
-//! access that repository is `self.metrics`, hence we need a `metrics` field
-//! with the `BizMetrics` type in `Biz`. It would be possible to use another
-//! field name by specificying another registry expression, such as
-//! `#[metered(registry = BizMetrics, registry_expr = self.my_custom_metrics)]`.
-//!
-//! Then, we must annotate which methods we wish to measure using the `measure`
-//! attribute, specifying the metrics we wish to apply: the metrics here are
-//! simply types of structures implementing the `Metric` trait, and you can
-//! define your own. Since there is no magic, we must ensure `self.metrics` can
-//! be accessed, and this will only work on methods with a `&self` or `&mut
-//! self` receiver.
-//!
-//! ## Example of manually using metrics
-//!
-//! ```
-//! use metered::{measure, HitCount, ErrorCount};
-//!
-//! #[derive(Default, Debug)]
-//! struct TestMetrics {
-//!     hit_count: HitCount,
-//!     error_count: ErrorCount,
-//! }
-//!
-//! fn test(should_fail: bool, metrics: &TestMetrics) -> Result<u32, &'static str> {
-//!     let hit_count = &metrics.hit_count;
-//!     let error_count = &metrics.error_count;
-//!     measure!(hit_count, {
-//!         measure!(error_count, {
-//!             if should_fail {
-//!                 Err("Failed!")
-//!             } else {
-//!                 Ok(42)
-//!             }
-//!         })
-//!     })
-//! }
-//! ```
-//!
-//! The code above shows how different metrics compose, and in general the kind
-//! of boilerplate generated by the `#[metered]` procedural macro.
+//! Metered is designed so it -- or parts of it -- can be upgraded without
+//! dragging a whole workspace along:
+//! * **OpenMetrics-native core.** The public API is the OpenMetrics model
+//!   (primitives, histograms, families, registries, schema); the semantic
+//!   measuring layer and method macros live in `metered-semantic`.
+//! * **One direct dependency.** The derive macros are re-exported from this
+//!   crate, so downstream crates depend on `metered` alone (never
+//!   `metered-macro`), and the two always move together.
+//! * **Hygienic, relocatable macros.** Generated code refers to `::metered::`
+//!   absolute paths, so it is immune to local shadowing.
+//! * **Evolvable surface.** Open enums such as [`MetricType`] are
+//!   `#[non_exhaustive]`, so new OpenMetrics constructs can be added without a
+//!   breaking change.
 
 #![deny(missing_docs)]
-#![deny(warnings)]
+// NB: intentionally *not* `#![deny(warnings)]`. Denying all warnings in a
+// published library means a new compiler/clippy lint can break every
+// downstream build on a newer toolchain until the crate is patched -- a
+// dependency-hell trap. Lint denial belongs in CI (`RUSTFLAGS="-D warnings"`).
 
-pub mod atomic;
-pub mod clear;
-pub mod common;
-pub mod hdr_histogram;
-pub mod int_counter;
-pub mod int_gauge;
-pub mod metric;
-pub(crate) mod num_wrapper;
-pub mod time_source;
+// The source is grouped into concern clusters (`model`, `instruments`,
+// `labels`), which are private: every public module inside them is re-exported
+// at the crate root below, so the crate's public module paths stay flat and
+// unchanged. (rustfmt keeps each blank-line-separated group sorted.)
+mod labels;
+mod model;
 
-pub use common::{ErrorCount, HitCount, InFlight, ResponseTime, Throughput};
-pub use metered_macro::{error_count, metered};
-pub use metric::{Counter, Gauge, Histogram, Metric};
+// Exposition: render a tree to a sink or a query, or adapt application state.
+pub mod sink;
 
-/// Re-export this type so 3rd-party crates don't need to depend on the
-/// `aspect-rs` crate.
-pub use aspect::Enter;
+// ---- Public module paths, re-exported from the concern clusters. ----
 
-/// The `measure!` macro takes a reference to a metric and an expression.
-///
-/// It applies the metric and the expression is returned unchanged.
-/// 
-/// ```rust
-/// use metered::{ResponseTime, measure};
-/// 
-/// let response_time: ResponseTime = ResponseTime::default();
-/// 
-/// measure!(&response_time, {
-///     std::thread::sleep(std::time::Duration::from_millis(100));
-/// });
-/// 
-/// assert!(response_time.histogram().mean() > 0.0);
-/// ```
-/// 
-/// It also allows to pass an array of references, which will expand recursively.
-/// 
-/// ```rust
-/// use metered::{HitCount, ResponseTime, measure};
-/// 
-/// let hit_count: HitCount = HitCount::default();
-/// let response_time: ResponseTime = ResponseTime::default();
-/// 
-/// measure!([&hit_count, &response_time], {
-///     std::thread::sleep(std::time::Duration::from_millis(100));
-/// });
-/// 
-/// assert_eq!(hit_count.get(), 1);
-/// assert!(response_time.histogram().mean() > 0.0);
-/// ```
-///
-#[macro_export]
-macro_rules! measure {
-    ([$metric:expr], $expr:expr) => {{
-        $crate::measure!($metric, $expr)
-    }};
-    
-    ([$metric:expr, $($metrics:expr),*], $expr:expr) => {
-        $crate::measure!($metric, $crate::measure!([$($metrics),*], $expr))
-    };
+// Core model: the metric-tree traits, metadata, the describe()/collect() pair,
+// and tree shaping. `handle` holds the shared backing state and is `pub`
+// (doc-hidden) only because generated code refers to it.
+#[doc(hidden)]
+pub use model::handle;
+pub use model::{meta, metric_tree, schema, shape, values};
 
-    ($metric:expr, $e:expr) => {{
-        let metric = $metric;
-        let guard = $crate::metric::ExitGuard::new(metric);
-        let mut result = $e;
-        guard.on_result(&mut result);
-        result
-    }};
-}
+// ---- Public API: re-exported in the same layers as the modules above.
+// (`doc(no_inline)` keeps each item documented under its module page, as it
+// was when the modules were declared at the crate root.) ----
 
-/// Serializer for values within a struct generated by
-/// `metered::metered_error_variants` that adds an `error_kind` label when being
-/// serialized by `serde_prometheus`.
-pub fn error_variant_serializer<S: serde::Serializer, T: serde::Serialize>(
-    value: &T,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    serializer.serialize_newtype_struct("!|variant[::]==<", value)
-}
+// Core model.
+#[doc(no_inline)]
+pub use meta::{Help, LabelName, Name, Scalar, Unit};
+#[doc(no_inline)]
+pub use metric_tree::{join_name, Metric, MetricTree, MetricTreeExt, MetricTreeMeta, MetricType};
+#[doc(no_inline)]
+pub use schema::{MetricFamilySchema, MetricSchema, SchemaError};
+#[doc(no_inline)]
+pub use values::{MetricExemplar, MetricSample, MetricSampleValue, MetricValues};
 
-/// Serializer for values within a struct generated by
-/// `metered::metered_error_variants` that adds an `error_kind` label when being
-/// serialized by `serde_prometheus`. If the `value` has been cleared. This
-/// operation is a no-op and the value wont be written to the `serializer`.
-pub fn error_variant_serializer_skip_cleared<
-    S: serde::Serializer,
-    T: serde::Serialize + clear::Clearable,
->(
-    value: &T,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    if value.is_cleared() {
-        serializer.serialize_none()
-    } else {
-        error_variant_serializer(value, serializer)
-    }
-}
+// Composition.
+#[doc(no_inline)]
+pub use shape::{Flatten, Renamed};
 
-/// Trait applied to error enums by `#[metered::error_count]` to identify
-/// generated error count structs.
-pub trait ErrorBreakdown<C: metric::Counter> {
-    /// The generated error count struct.
-    type ErrorCount;
-}
-
-/// Generic trait for `ErrorBreakdown::ErrorCount` to increase error count for a
-/// specific variant by 1.
-pub trait ErrorBreakdownIncr<E> {
-    /// Increase count for given variant by 1.
-    fn incr(&self, e: &E);
-}
+// Exposition.
+pub use sink::MetricSink;

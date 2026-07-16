@@ -4,4 +4,6 @@ check-all = "check --all --all-targets --all-features"
 clippy-all = "clippy --all --all-targets --all-features -- -Dwarnings -Drust-2018-idioms -Adeprecated"
 # Format Rust code with stable-compatible nightly features
 fmt-unstable = "fmt --all -- --config-path rustfmt-unstable.toml"
-
+# Core coverage gate. Proc-macro parser internals and examples are excluded
+# from the threshold; they can have their own targeted gates.
+llvm-cov-core = "llvm-cov --workspace --all-features --summary-only --fail-under-lines 90 --ignore-filename-regex metered-macro|examples|samples"
