@@ -1,0 +1,23 @@
+[package]
+name = "metered-samples"
+version = "0.10.0"
+authors = ["Simon Chemouil <simon.chemouil@lambdacube.fr>"]
+license = "Apache-2.0 OR MIT"
+description = "Compile-checked API samples for the metered workspace (not published)."
+edition = "2021"
+rust-version = "1.70"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+metered = { path = "../metered" }
+metered-om = { path = "../metered-om" }
+metered-semantic = { path = "../metered-semantic", features = ["recording"] }
+metered-tracing = { path = "../metered-tracing" }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+  "registry",
+  "std",
+] }
