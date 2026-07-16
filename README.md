@@ -1,247 +1,387 @@
 # metered-rs
-[![Build Status](https://travis-ci.org/magnet/metered-rs.svg?branch=master)](https://travis-ci.org/magnet/metered-rs)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
-https://github.com/magnet/metered-rs)
-[![Cargo](https://img.shields.io/crates/v/metered.svg)](
-https://crates.io/crates/metered)
-[![Documentation](https://docs.rs/metered/badge.svg)](
-https://docs.rs/metered)
-[![Rust 1.31+](https://img.shields.io/badge/rust-1.31+-lightgray.svg)](
-https://www.rust-lang.org)
 
-## Fast, ergonomic metrics for Rust!
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/magnet/metered-rs)
+[![Cargo](https://img.shields.io/crates/v/metered.svg)](https://crates.io/crates/metered)
+[![Documentation](https://docs.rs/metered/badge.svg)](https://docs.rs/metered)
+[![Book](https://img.shields.io/badge/book-Metered-blue.svg)](https://magnet.github.io/metered-rs/)
 
-Metered helps you measure the performance of your programs in production. Inspired by Coda Hale's Java metrics library, Metered makes live measurements easy by providing declarative and procedural macros to measure your program without altering your logic.
+## Fast, ergonomic, OpenMetrics-native metrics for Rust
 
-Metered is built with the following principles in mind:
- * **high ergonomics but no magic**: measuring code should just be a matter of annotating code. Metered lets you build your own metric registries from bare metrics, or will generate one using procedural macros. It does not use shared globals or statics.
+Metered helps you measure your programs in production. It is a metric-state,
+composition, and schema/value collection library for Rust services. Exposition
+formats live in sink crates such as `metered-om`.
 
- * **constant, very low overhead**: good ergonomics should not come with an overhead; the only overhead is the one imposed by actual metric back-ends themselves (e.g, counters, gauges, histograms), and those provided in Metered do not allocate after initialization.  Metered will generate metric registries as regular Rust `struct`s, so there is no lookup involved with finding a metric. Metered provides both unsynchronized and thread-safe metric back-ends so that single-threaded or share-nothing architectures don't pay for synchronization. Where possible, thread-safe metric back-ends provided by Metered use lock-free data-structures.
+**[The Metered book](https://magnet.github.io/metered-rs/)** is the full
+guide. It covers the metric model, every metric type and when to use it,
+labels, name shaping, exemplars, tracing, dashboards, and migration. This
+README is the tour. The book is the reference.
 
- * **extensible**: metrics are just regular types that implement the [`Metric`](https://docs.rs/metered/latest/metered/metric/trait.Metric.html) trait with a specific behavior. Metered's macros let you refer to any Rust type, resulting in user-extensible attributes!
+Core `metered` gives services readable metric state (`Counter`, `Gauge`,
+histograms, `Family`), typed metric trees, and schema/value collection. It also
+gives registry views that borrow through the real service graph at scrape time.
 
- Many metrics are only meaningful if we get precise statistics. When it comes to low-latency, high-range histograms, there's nothing better than [Gil Tene's High Dynamic Range Histograms](http://hdrhistogram.org/) and Metered uses [the official Rust port](https://github.com/HdrHistogram/HdrHistogram_rust) by default for its histograms.
+Metered layers operation instrumentation:
 
+- Does your code already emit [`tracing`](https://docs.rs/tracing) spans?
+  `metered-tracing` turns them into metric families. An instrumented method
+  gets counters and duration histograms from the span it already opens. You
+  instrument once and pay once, for both traces and metrics.
+- Everything else is plain core metric state -- counters, gauges, and
+  histograms your code owns and updates directly.
 
-## Changelog
+A few ideas guide Metered:
 
-* 0.9.0:
-  * Wrapping int metrics instead of under/overflow
-  * Provide methods to increment or decrement int metrics by more than 1, useful for batched computations
-  * Add blanket implementations for `Clear` (contributed by [@plankton6](https://github.com/plankton6)) 
-  * Add len method to `HdrHistogram` (contributed by [@plankton6](https://github.com/plankton6)) 
-  * Code quality fixes and dependency updates
-* 0.8.0:
-  * Update Metrics via `OnResultMut` rather than an `OnResult` to support metrics that require mutable access to the result - for instance to consume a `Stream` (contributed by [@w4](https://github.com/w4))
-* 0.7.0:
-  * Expose inner metric backend `Throughput` type (fixes issue #30)
-  * Implement `Deref` for all top-level metrics
-  * Expose inner metric backend `Throughput` type
-  * Add `skip_cleared` option to `error_count` attribute  (contributed by [@w4](https://github.com/w4))
-     * Introduce a new `Clearable` trait that exposes behavior for metrics that implement `Clear` (in an effort of backwards compatibility).  Currently only implemented on counters.
-     * Default behavior can be controlled by the a build-time feature, `error-count-skip-cleared-by-default`
-* 0.6.0:
-  * Extend `error_count` macro to allow `nested` enum error variants to be reported, providing zero-cost error tracking for nested errors (contributed by [@w4](https://github.com/w4))
-* 0.5.0:
-  * Make inner metrics public (contributed by [@nemosupremo](https://github.com/nemosupremo))
-  * Provide `error_count` macro to generate a tailored `ErrorCount` metric counting variants for an error enum (contributed by [@w4](https://github.com/w4))
-  * Use `Drop` to automatically trigger metrics that don't rely on the result value (affects `InFlight`, `ResponseTime`, `Throughput`)
-* 0.4.0:
-  * Add allow(missing_docs) to generated structs (This allows to use metered structs in Rust code with lint level warn(missing_docs) or even deny(missing_docs)) (contributed by [@reyk](https://github.com/reyk))
-  * Implement `Clear` for generated registries (contributed by [@eliaslevy](https://github.com/eliaslevy))
-  * Implement `Histogram` and `Clear` for `RefCell<HdrHistogram>` (contributed by [@eliaslevy](https://github.com/eliaslevy))
-  * Introduce an `Instant` with microsecond precision (contributed by [@eliaslevy](https://github.com/eliaslevy))
-     * API breaking change: `Instant.elapsed_millis` is renamed to `elapsed_time`, and a new associated constant, `ONE_SEC` is introduced to specify one second in the instant units.
-  * Make `AtomicTxPerSec` and `TxPerSec` visible by reexporting  (contributed by [@eliaslevy](https://github.com/eliaslevy))
-  * Add `StdInstant` as the default type parameter for `T: Instant` in `TxPerSec`  (contributed by [@eliaslevy](https://github.com/eliaslevy))
-  * Modify HdrHistogram to work with serde_prometheus (contributed by [@w4](https://github.com/w4))
-     * To be used with [serde_prometheus](https://github.com/w4/serde_prometheus) and any HTTP server.
-  * Bumped dependencies:
-     * `indexmap`: 1.1 -> 1.3 
-     * `hdrhistogram`: 6.3 -> 7.1 
-     * `parking_lot`: 0.9 -> 0.10  
-* 0.3.0:
-  * Fix to preserve span in `async` measured methods.
-  * Update nightly sample for new syntax and Tokio 0.2-alpha (using std futures, will need Rust >= 1.39, nightly or not)
-  * Updated dependencies to use `syn`, `proc-macro2` and `quote` 1.0
-* 0.2.2:
-  * Async support in `#measured` methods don't rely on async closures anymore, so client code will not require the `async_closure` feature gate.
-  * Updated dependency versions
-* 0.2.1:
-  * Under certain circumstances, Serde would serialize "nulls" for `PhantomData` markers in `ResponseTime` and `Throughput` metrics. They are now explicitely excluded.
-* 0.2.0:
-  * Support for `.await` notation users (no more `await!()`)
-* 0.1.3:
-  * Fix for early returns in `#[measure]`'ed methods
-  * Removed usage of crate `AtomicRefCell` which sometimes panicked .
-  * Support for custom registry visibility.
-  * Support for `async` + `await!()` macro users.
+* **Metrics are state, not shadows.** A metric is the live value your code uses:
+  an enabled flag can be a gauge-valued atomic that the service reads, and a
+  queue-depth gauge should come from the queue or its cached depth. Metrics are
+  readable, not write-only.
 
+* **Native OpenMetrics, zero serialization.** Metrics encode straight to the
+  OpenMetrics text format through schema/value collection and
+  `metered-om`. There is **no `serde` dependency** on the default path.
 
-## Using Metered
+* **No magic, no globals.** Owner-local metrics, no shared `Arc` handles, no
+  static state. Composition is explicit, via plain `struct`s, derives,
+  `Registry`, or `MetricTreeView`.
 
-Metered comes with a variety of useful metrics ready out-of-the-box:
-* `HitCount`: a counter tracking how much a piece of code was hit.
-* `ErrorCount`: a counter tracking how many errors were returned -- (works on any expression returning a std `Result`)
-* `InFlight`: a gauge tracking how many requests are active 
-* `ResponseTime`: statistics backed by an HdrHistogram of the duration of an expression
-* `Throughput`: statistics backed by an HdrHistogram of how many times an expression is called per second.
+## Getting started
 
-These metrics are usually applied to methods, using provided procedural macros that generate the boilerplate.
+Applications depend on the `metered` facade and enable the satellites they
+need as features:
 
-To achieve higher performance, these stock metrics can be customized to use non-thread safe (`!Sync`/`!Send`) datastructures, but they default to thread-safe datastructures implemented using lock-free strategies where possible. This is an ergonomical choice to provide defaults that work in all situations.
+```toml
+[dependencies]
+metered = { version = "0.10.0-rc.1", features = ["om"] }
+```
 
-Metered is designed as a zero-overhead abstraction -- in the sense that the higher-level ergonomics should not cost over manually adding metrics. Notably, stock metrics will *not* allocate memory after they're initialized the first time.  However, they are triggered at every method call and it can be interesting to use lighter metrics (e.g `HitCount`) in hot code paths and favour heavier metrics (`Throughput`, `ResponseTime`) in higher-level entry points.
+Library authors who only produce metrics can depend on `metered-core` directly
+for a maximally stable, sink-free surface. The facade re-exports the same
+types, so their trees compose into any app.
 
-If a metric you need is missing, or if you want to customize a metric (for instance, to track how many times a specific error occurs, or react depending on your return type), it is possible to implement your own metrics simply by implementing the trait `metered::metric::Metric`.
+## The model
 
-Metered does not use statics or shared global state. Instead, it lets you either build your own metric registry using the metrics you need, or can generate a metric registry for you using method attributes. Metered will generate one registry per `impl` block annotated with the `metered` attribute, under the name provided as the `registry` parameter. By default, Metered will expect the registry to be accessed as `self.metrics` but the expression can be overridden with the `registry_expr` attribute parameter. See the demos for more examples.
+Pick the layer that owns the information:
 
-Metered will generate metric registries that derive `Debug` and `serde::Serialize` to extract your metrics easily. Metered generates one sub-registry per method annotated with the `measure` attribute, hence organizing metrics hierarchically. This ensures access time to metrics in generated registries is always constant (and, when possible, cache-friendly), without any overhead other than the metric itself.
+| You have… | Use… |
+|---|---|
+| A value your code owns and reads | readable metric state: concrete atomics implementing the `Counter` / `Gauge` traits, histograms, `Info`, `StateSet`, or a custom `Metric` |
+| A dynamic label dimension | `Family<L, M>` -- one series per label set |
+| Metrics inside a service graph | `MetricTreeView<C>` selectors or a borrowed `Registry` |
+| Generic span lifecycle measurements | `metered-tracing` span name/kind/status metrics |
+| An operation boundary without spans | plain core state: a counter plus a duration histogram through `BucketHistogram::observe_duration` |
 
-Metered will happily measure any method, whether it is `async` or not, and the metrics will work as expected (e.g, `ResponseTime` will return the completion time across `await`'ed invocations).
+## Metrics as state
 
-Right now, Metered does not provide bridges to external metric storage or monitoring systems. Such support is planned in separate modules (contributions welcome!).
+`Counter` and `Gauge` are the contracts the exposition side reads through.
+Standard-library atomics already implement them, so the atomic your code
+updates *is* the metric. Write your code like you want. There is no metrics
+API to call on the hot path:
+
+```rust
+use std::sync::atomic::{AtomicU64, Ordering};
+
+let depth = AtomicU64::new(0);
+depth.fetch_add(1, Ordering::Relaxed);        // the queue pushed
+assert_eq!(depth.load(Ordering::Relaxed), 1); // the queue reads its own depth
+
+let enabled = AtomicU64::new(1); // a flag is the idiomatic 0/1 gauge
+```
+
+OpenMetrics has no boolean type, so a flag is the idiomatic gauge `0`/`1`. For
+enum-like status, use `StateSet`. For static build info, use `Info`.
+
+Use gauges for current state, not event bookkeeping. A queue depth should usually
+come from the queue, or from a cached atomic that the queue updates during
+mutations. Do not use a separate shadow metric that can drift.
+
+## Existing state as metrics
+
+Already have an `AtomicBool`, a queue length, or a configuration value? Expose
+it as a metric without keeping a duplicate shadow value. Metered reads the value
+at collection time:
+
+```rust
+use std::sync::atomic::{AtomicBool, Ordering};
+use metered::adapter::flag;
+
+let enabled = AtomicBool::new(true);
+let metric = flag(|| enabled.load(Ordering::Relaxed)); // gauge 0/1, live
+```
+
+For service-level exposition, prefer a borrowed `MetricTreeView` or a
+`#[derive(MetricTree)]` view struct. See the book’s [adding metrics guide](https://magnet.github.io/metered-rs/adding-metrics.html) for
+the recommended service pattern.
+
+Custom leaf metrics implement `Metric`. Custom metric composites implement
+`MetricTree`. Ready-made adapters like `adapter::flag`, `GaugeFn`, and
+`CounterFn` are just convenience metric implementations for existing values.
+Prefer a named newtype or a borrowed view struct for service-owned state when
+that makes ownership and semantics clearer.
+
+## Dynamic labels with `Family`
+
+```rust
+use metered::{Counter, Family};
+use std::sync::atomic::AtomicU64;
+
+let by_method: Family<Vec<(String, String)>, AtomicU64> = Family::with_label_names(["method"]);
+by_method.with(&vec![("method".into(), "get".into())], |c| c.incr());
+```
+
+For typed, validated label sets, `#[derive(LabelSet)]` on a struct and use it as
+the family key. When your state is already a keyed map of components, expose it
+borrowed as a [family view](https://magnet.github.io/metered-rs/labels-families.html)
+instead of mirroring it into an owned `Family`. Use `family_view`, or its
+one-string-key sugar `family_by`.
+
+## Operation instrumentation
+
+If an operation already runs inside a `tracing` span -- an
+`#[tracing::instrument]`-ed method, or a span your middleware opens --
+`metered-tracing` derives its metrics from that span. The layer records span
+name, span kind, and final status as Metered counters and bucket histograms.
+One instrumentation produces both the trace and the metrics. The code never
+pays twice for the same measurement.
+
+Server middleware for RPC/HTTP golden signals is framework territory. Build it
+on plain core state, such as counters, duration histograms, and `Family`, like
+any other component that owns what it measures. When such middleware already
+opens semconv spans, it can derive the metrics from them through
+`metered-tracing`. The order-service example shows that pattern.
+
+For an operation that is not span-shaped, use plain core state. Examples are a
+background refresh and a batch step. Use a counter for attempts, a counter for
+failures, and a `BucketHistogram` with `observe_duration`. The metrics live on
+the component that owns the operation, like any other state.
+
+## Exposing everything: `Registry`
+
+The OpenMetrics text exposition lives in the separate `metered-om`
+crate (the core `metered` crate is exposition-format-agnostic via its
+`MetricSink` trait). Add both, then bring `OpenMetricsRegistryExt` into scope for
+`encode_to_string`:
+
+```rust
+use metered::entry::{counter, gauge};
+use metered::{Registry, Unit};
+use metered_om::OpenMetricsRegistryExt;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+let requests = AtomicU64::new(0);
+let queue_depth = AtomicU64::new(0);
+requests.fetch_add(1, Ordering::Relaxed);
+queue_depth.store(3, Ordering::Relaxed);
+
+let mut registry = Registry::with_prefix("myapp");
+registry.label("env", "prod");
+registry.register(counter("requests").source(&requests).help("Total requests handled"));
+registry.register(gauge("queue_depth").source(&queue_depth).help("Items waiting").unit(Unit::Items));
+
+let text = registry.encode_to_string().unwrap();
+```
+
+produces:
+
+```text
+# HELP myapp_requests Total requests handled
+# TYPE myapp_requests counter
+myapp_requests_total{env="prod"} 1
+# HELP myapp_queue_depth Items waiting
+# TYPE myapp_queue_depth gauge
+# UNIT myapp_queue_depth items
+myapp_queue_depth{env="prod"} 3
+# EOF
+```
+
+You can register anything that implements `MetricTree`: a metric leaf, a
+`Family`, an `adapter` metric, or a `#[derive(MetricTree)]` struct. Nested
+structures compose
+through their schema/value collection implementations. `Registry::schema()`
+returns the metric contract, `Registry::values()` samples the current values, and
+`metered_om::OpenMetricsEncoder::encode_document(&schema, &values)`
+renders both to text. Use `metered_om::OpenMetricsDocument::parse(...)`
+to inspect emitted text structurally in tests or tooling instead of matching raw
+strings.
+
+If the metrics live inside an app context, use `MetricTreeView<C>` instead
+of storing references in a `Registry`:
+
+```rust
+use metered::entry::{counter, gauge};
+use metered::{MetricTreeView, Unit};
+use std::sync::atomic::AtomicU64;
+
+struct App {
+    requests: AtomicU64,
+    queue_depth: AtomicU64,
+}
+
+fn app_view() -> MetricTreeView<'static, App> {
+    let mut view = MetricTreeView::with_prefix("app");
+    view.register(
+        counter("requests")
+            .select(|app: &App| &app.requests)
+            .help("Total requests")
+            .unit(Unit::Requests),
+    );
+    view.register(
+        gauge("queue_depth")
+            .select(|app: &App| &app.queue_depth)
+            .help("Queue depth")
+            .unit(Unit::Items),
+    );
+    view
+}
+```
+
+`MetricTreeView` stores only the selector closure. It does not own, clone, or share
+the metric. Each encode/schema call borrows through the supplied context.
+For values that already live in the context but are not metric types, use the
+closure helpers:
+
+```rust
+use metered::entry::gauge_value;
+use metered::MetricTreeView;
+
+struct App {
+    enabled: bool,
+}
+
+let mut view = MetricTreeView::with_prefix("myapp");
+view.register(
+    gauge_value("enabled")
+        .read(|app: &App| app.enabled as i64)
+        .help("Whether the app is enabled"),
+);
+```
+
+## Histograms: pick your distribution engine
+
+Metered ships four histogram instruments and a summary. All duration
+measurements are cumulative histograms in seconds, so backends can aggregate
+them across replicas. The book's
+[histograms in depth section](https://magnet.github.io/metered-rs/histograms.html)
+carries the full comparison: who chooses the buckets, memory, observe cost,
+and saturation behavior. The short version:
+
+| Instrument | Buckets | Memory | Observe path | Reach for it when |
+| --- | --- | --- | --- | --- |
+| `BucketHistogram` | hand-picked `le` bounds | fixed | lock-free | you know the boundaries that matter, such as your latency-objective edges |
+| `FixedExponentialHistogram` | implicit powers of `2^(2^-schema)`, dense | fixed by the configured range | fully lock-free | one hot histogram over a known range |
+| `DynamicExponentialHistogram` | implicit, **sparse** | tracks the buckets you hit | lock-free: one `log2`, one atomic add | wide or unknown ranges, many instances -- the default |
+| `GaugeBuckets` | hand-picked, current population | fixed | lock-free `enter`/`leave` | distributions that go down, such as the sizes of items held now |
+| `Summary` | pre-computed quantiles over a `QuantileSource` | reads your distribution | -- | exact per-instance quantiles, legacy dashboard parity |
+
+**The star is `DynamicExponentialHistogram`.** One parameter, the `schema`,
+gives bounded *relative* error across the whole value range: `schema` 3 is
+about 9% per bucket, 5 is 2.2%, 8 is 0.27%. There is no boundary list to
+choose, tune, or migrate. Memory tracks the buckets your values populate, not
+the range you configured, so a fleet of them stays cheap. The observe path is
+one `log2` and one atomic increment.
+
+When the bucket table saturates, the histogram merges adjacent buckets to make
+room. That rebuild runs off the hot path, at scrape time. A lock-free swap
+publishes the coarser table. Observers never block on it, and a straggler's
+increment is never dropped. Exemplars ride on the buckets, also lock-free.
+
+An exponential histogram can encode as classic `le` buckets or as
+VictoriaMetrics `vmrange` series. The family declares its intent and the sink
+resolves it. See
+[the OpenMetrics section](https://magnet.github.io/metered-rs/openmetrics.html).
+
+## Exemplars
+
+With the optional `exemplar-context` feature, a tracing layer can wire the
+active trace's exemplar through a thread-local context. Read it with
+`ThreadLocalExemplars`. Attach it to an observation with
+`BucketHistogram::observe_with_exemplar`.
+
+## Support crates
+
+The workspace keeps integrations out of the core crate:
+
+* `metered-om` renders OpenMetrics text, including VictoriaMetrics
+  `vmrange` histogram rendering and Hyper 1 response helpers.
+* `metered-tracing` turns `tracing` span lifecycle data into `MetricTree` values;
+  enable its `exemplar` feature to feed trace/span IDs into OpenMetrics
+  exemplars via `metered`'s `exemplar-context`.
+* `metered-telemetry-tokio` exposes Tokio task/runtime telemetry as metric trees.
+* `metered-telemetry-process` exposes standard process telemetry (CPU, memory,
+  file descriptors) under the canonical `process_*` names.
+* `metered-telemetry-system` exposes host telemetry (CPU, memory, swap, load,
+  uptime) as a metric tree.
+* `metered-om`'s `TextSourceTree` passes any classic Prometheus-text
+  source through to a 0.10 scrape endpoint during migration. An example source
+  is the serialized output of a `metered` 0.9 registry.
+
+## Feature flags
+
+The `metered` facade re-exports the support crates behind features: `om`,
+`tracing`, `telemetry-tokio`, `telemetry-process`, `telemetry-system`, and
+`full` for everything at once.
+
+The core model has a single optional feature, forwarded by the facade:
+
+* `exemplar-context` *(off by default)*: an ambient thread-local exemplar
+  context that wires exemplars to the active trace. `metered-tracing`'s
+  `exemplar` feature builds on it.
+
+## Stability & dependency policy
+
+Metered lets you upgrade it, or parts of it, without an upgrade of your whole
+workspace:
+
+* **No foreign types in the default public API.** A `metered` version bump
+  should not force unrelated dependency bumps on callers. Dependency types
+  should not leak through the default signatures of `metered`.
+* **A single direct dependency.** The `LabelSet` / `MetricTree` derives are
+  re-exported from `metered`, so you never depend on `metered-macro` directly.
+* **Hygienic, relocatable macros.** Generated code uses `::metered::` absolute
+  paths, so it keeps working regardless of local items named `metered` or a
+  renamed dependency.
+* **An evolvable surface.** Open enums such as `MetricType` are
+  `#[non_exhaustive]`, and extension traits stay minimal, so new OpenMetrics
+  constructs can land without a breaking release. Opaque wrappers hide internal
+  sharing types, for example the `Arc` handle.
+* **Toolchain-friendly.** The library does not `#![deny(warnings)]`, so a new
+  compiler or `clippy` lint won't break your build until the maintainers patch
+  `metered`. Lint denial lives in CI instead.
+
+## Extending
+
+Implement `Metric` for a single leaf metric: it declares the OpenMetrics type
+once and encodes the samples for that same family. Implement `MetricTree`
+directly only for composite metric trees. Wrap a primitive in a newtype for
+domain-specific semantics.
 
 ## Required Rust version
 
-Metered works on `Rust` stable, starting 1.31.0.
+Every crate sets `rust-version = "1.85"`, except `metered-telemetry-system`,
+which needs 1.95 for its `sysinfo` backend. CI compiles both floors on the real
+toolchains. Nightly is not required.
 
-It does not use any nightly features. There may be a `nightly` feature flag at some point to use upcoming Rust features (such as `const fn`s), and similar features from crates Metered depends on, but this is low priority (contributions welcome).
+## Migrating
 
-## Example using procedural macros (recommended)
-
-```rust
-use metered::{metered, Throughput, HitCount};
-
-#[derive(Default, Debug, serde::Serialize)]
-pub struct Biz {
-    metrics: BizMetrics,
-}
-
-#[metered(registry = BizMetrics)]
-impl Biz {
-    #[measure([HitCount, Throughput])]
-    pub fn biz(&self) {        
-        let delay = std::time::Duration::from_millis(rand::random::<u64>() % 200);
-        std::thread::sleep(delay);
-    }   
-}
-```
-
-In the snippet above, we will measure the `HitCount` and `Throughput` of the `biz` method.
-
-This works by first annotating the `impl` block with the `metered` annotation and specifying the name Metered should give to the metric registry (here `BizMetrics`). Later, Metered will assume the expression to access that repository is `self.metrics`, hence we need a `metrics` field with the `BizMetrics` type in `Biz`. It would be possible to use another field name by specificying another registry expression, such as `#[metered(registry = BizMetrics, registry_expr = self.my_custom_metrics)]`.
-
-Then, we must annotate which methods we wish to measure using the `measure` attribute, specifying the metrics we wish to apply: the metrics here are simply types of structures implementing the `Metric` trait, and you can define your own. Since there is no magic, we must ensure `self.metrics` can be accessed, and this will only work on methods with a `&self` or `&mut self` receiver.
-
-Let's look at `biz`'s code a second: it's a blocking method that returns after between 0 and 200ms, using `rand::random`. Since `random` has a random distribution, we can expect the mean sleep time to be around 100ms. That would mean around 10 calls per second per thread.
-
-In the following test, we spawn 5 threads that each will call `biz()` 200 times. We thus can expect a hit count of 1000, that it will take around 20 seconds (which means 20 samples, since we collect one sample per second), and around 50 calls per second (10 per thread, with 5 threads).
-
-```rust
-use std::thread;
-use std::sync::Arc;
-
-fn test_biz() {
-    let biz = Arc::new(Biz::default());
-    let mut threads = Vec::new();
-    for _ in 0..5 {
-        let biz = Arc::clone(&biz);
-        let t = thread::spawn(move || {
-            for _ in 0..200 {
-                biz.biz();
-            }
-        });
-        threads.push(t);
-    }
-    for t in threads {
-        t.join().unwrap();
-    }
-    // Print the results!
-    let serialized = serde_yaml::to_string(&*biz).unwrap();
-    println!("{}", serialized);
-}
-```
-
-We can then use serde to serialize our type as YAML:
-```yaml
-metrics:
-  biz:
-    hit_count: 1000
-    throughput:
-      - samples: 20
-        min: 35
-        max: 58
-        mean: 49.75
-        stdev: 5.146600819958742
-        90%ile: 55
-        95%ile: 55
-        99%ile: 58
-        99.9%ile: 58
-        99.99%ile: 58
-      - ~
-```
-
-We see we indead have a mean of 49.75 calls per second, which corresponds to our expectations.
-
-The Hdr Histogram backing these statistics is able to give much more than fixed percentiles, but this is a practical view when using text. For a better performance analysis, please watch Gil Tene's talks ;-).
-
-## Macro Reference
-
-### The `metered` attribute
-
-`#[metered(registry = YourRegistryName, registry_expr = self.wrapper.my_registry)]` 
-
-`registry` is mandatory and must be a valid Rust ident.
-
-`registry_expr` defaults to `self.metrics`, alternate values must be a valid Rust expression. This setting lets you configure the expression which resolves to the registry. Please note that this triggers an immutable borrow of that expression.
-
-`visibility` defaults to `pub(crate)`, and must be a valid struct Rust visibility (e.g, `pub`, `<nothing>`, `pub(self)`, etc). This setting lets you alter the visibility of the generated registry `struct`s. The registry fields are always public and named after snake cased methods or metrics.
-
-### The `measure` attribute
-
-Single metric:
-
-`#[measure(path::to::MyMetric<u64>)]`
-
-or: 
-
-`#[measure(type = path::to::MyMetric<u64>)]`
-
-Multiple metrics:
-
-`#[measure([path::to::MyMetric<u64>, path::AnotherMetric])]`
-
-or
-
-`#[measure(type = [path::to::MyMetric<u64>, path::AnotherMetric])]`
-
-The `type` keyword is allowed because other keywords are planned for future extra attributes (e.g, instantation options).
-
-When `measure` attribute is applied to an `impl` block, it applies for every method that has a `measure` attribute. If a method does not need extra measure infos, it is possible to annotate it with simply `#[measure]` and the `impl` block's `measure` configuration will be applied.
-
-The `measure` keyword can be added several times on an `impl` block or method, which will add to the list of metrics applied. Adding the same metric several time will lead in a name clash.
-
-### Design
-
-Metered's custom attribute parsing supports using reserved keywords and arbitrary Rust syntax. The code has been extracted to the [Synattra](https://github.com/magnet/synattra) project, which provides useful methods on top of the Syn parser for Attribute parsing.
-
-Metered's metrics can wrap any piece of code, regardless of whether they're `async` blocks or not, using hygienic macros to emulate an approach similar to aspect-oriented programming. That code has been extracted to the [Aspect-rs](https://github.com/magnet/aspect-rs) project!
-
+Code on `0.9.0` and earlier should read the book’s [migration section](https://magnet.github.io/metered-rs/migration.html) “Migrating from older
+versions”. The short version: 0.10 is a new metric model with no
+source-compatibility shim, so migration is coexistence. Keep old modules on a
+renamed `metered` 0.9 dependency, and move code module by module. Serve one
+OpenMetrics endpoint from the 0.10 side, and bridge still-live 0.9 metrics into
+it, until no 0.9 metric remains.
 
 ## License
 
 Licensed under either of
 
- * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0: [LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0
+* MIT license: [LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT
 
 at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms or
-conditions.
+Unless you explicitly state otherwise, the preceding dual license applies to
+any contribution that you intentionally submit for inclusion in the work. The
+Apache-2.0 license defines intentional submission. No extra terms or conditions
+apply.
+
