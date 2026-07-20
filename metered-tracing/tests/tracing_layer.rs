@@ -35,6 +35,14 @@ fn sample_value<'a>(text: &'a str, metric: &str) -> Option<&'a str> {
         .map(|line| line.rsplit_once(' ').map(|(_, v)| v).unwrap_or(line))
 }
 
+/// The parsed value of a `_sum` sample, panicking when the sample is missing.
+fn sum_value(text: &str, metric: &str) -> f64 {
+    sample_value(text, metric)
+        .unwrap_or_else(|| panic!("missing sample {metric}"))
+        .parse()
+        .expect("sum parses as f64")
+}
+
 #[test]
 fn span_close_records_semantic_family_labeled_from_fields() {
     let rpc = SpanMetric::for_span("rpc.server")
@@ -52,6 +60,9 @@ fn span_close_records_semantic_family_labeled_from_fields() {
             "rpc.grpc.status_code" = "OK"
         );
         let _entered = span.enter();
+        // Give the span a measurable lifetime so the duration sum assertion
+        // below is deterministic rather than racing clock resolution.
+        std::thread::sleep(std::time::Duration::from_millis(1));
     });
 
     let text = render_span_metric("rpc_server", &rpc);
@@ -73,6 +84,15 @@ fn span_close_records_semantic_family_labeled_from_fields() {
             "rpc_server_duration_seconds_count{rpc_method=\"CreateOrder\",rpc_status=\"OK\"}"
         ),
         Some("1")
+    );
+    // The count alone would still pass if the close path observed 0.0 instead
+    // of the span's wall-clock time; a positive sum pins the real measurement.
+    assert!(
+        sum_value(
+            &text,
+            "rpc_server_duration_seconds_sum{rpc_method=\"CreateOrder\",rpc_status=\"OK\"}"
+        ) > 0.0,
+        "span close should observe the span's wall-clock duration"
     );
 }
 
@@ -380,7 +400,8 @@ fn span_labels_opener_resolves_across_modules() {
     tracing::subscriber::with_default(subscriber, || {
         // The struct lives in `inner`; the opener macro is at the crate root.
         let span = metered_info_span!(CrossModuleLabels; rpc_method = "CreateOrder".to_owned());
-        span.in_scope(|| {});
+        // A measurable lifetime keeps the duration sum assertion deterministic.
+        span.in_scope(|| std::thread::sleep(std::time::Duration::from_millis(1)));
     });
 
     let mut registry = Registry::new();
@@ -392,6 +413,13 @@ fn span_labels_opener_resolves_across_modules() {
             "rpc_server_duration_seconds_count{rpc_method=\"CreateOrder\"}"
         ),
         Some("1")
+    );
+    assert!(
+        sum_value(
+            &text,
+            "rpc_server_duration_seconds_sum{rpc_method=\"CreateOrder\"}"
+        ) > 0.0,
+        "span close should observe the span's wall-clock duration"
     );
 }
 

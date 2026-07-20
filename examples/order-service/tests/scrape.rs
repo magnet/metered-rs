@@ -29,6 +29,9 @@ fn demo_scrape_shows_span_derived_and_directly_owned_metrics() {
             .value,
         "100"
     );
+    // Counts alone survive an `observe(0.0)` regression; positive sums pin the
+    // fact that real wall-clock durations flowed into every histogram.
+    assert!(sum_sample(&doc, "rpc_server_duration_seconds_sum") > 0.0);
 
     // The dynamic exponential duration histogram carries a trace exemplar on the
     // bucket the observation landed in. The exemplar is *sampled* (one per bucket,
@@ -83,6 +86,7 @@ fn demo_scrape_shows_span_derived_and_directly_owned_metrics() {
         sum_samples(&doc, "order_service_orders_create_duration_seconds_count"),
         100
     );
+    assert!(sum_sample(&doc, "order_service_orders_create_duration_seconds_sum") > 0.0);
 
     // DB query metrics, derived from the `db.query` span. DB is a cross-service
     // semantic-convention family, so it keeps the shared name and a `service` label.
@@ -96,6 +100,7 @@ fn demo_scrape_shows_span_derived_and_directly_owned_metrics() {
             .value,
         "100"
     );
+    assert!(sum_sample(&doc, "db_client_duration_seconds_sum") > 0.0);
 
     // Background job runs, derived from the `jobs.run` span: one job ran, the
     // rest found an empty queue.
@@ -197,6 +202,16 @@ fn sum_samples(doc: &OpenMetricsDocument, name: &str) -> u64 {
     doc.samples_named(name)
         .iter()
         .map(|sample| sample.value.parse::<u64>().unwrap())
+        .sum()
+}
+
+/// The combined value of a family's `_sum` samples across all label sets.
+fn sum_sample(doc: &OpenMetricsDocument, name: &str) -> f64 {
+    let samples = doc.samples_named(name);
+    assert!(!samples.is_empty(), "missing sum sample {name}");
+    samples
+        .iter()
+        .map(|sample| sample.value.parse::<f64>().unwrap())
         .sum()
 }
 

@@ -15,7 +15,10 @@ struct Worker {
 #[metered(registry = WorkerMetrics)]
 impl Worker {
     #[measure([HitCount, Elapsed])]
-    fn run(&self) {}
+    fn run(&self) {
+        // A measurable body keeps the elapsed-sum assertion deterministic.
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
 }
 
 #[test]
@@ -80,6 +83,17 @@ fn full_model_composes_into_one_openmetrics_document() {
     assert!(text.contains("worker_ops_run_hit_count_total{instance=\"i-1\"} 2"));
     assert!(text.contains("# TYPE worker_ops_run_elapsed histogram"));
     assert!(text.contains("worker_ops_run_elapsed_count{instance=\"i-1\"} 2"));
+    // The count alone survives an `observe(0.0)` regression; a positive sum
+    // pins the fact that `Elapsed` measured the method's wall-clock time.
+    let elapsed_sum: f64 = text
+        .lines()
+        .find(|line| line.starts_with("worker_ops_run_elapsed_sum{instance=\"i-1\"}"))
+        .and_then(|line| line.rsplit_once(' '))
+        .expect("missing worker_ops_run_elapsed_sum sample")
+        .1
+        .parse()
+        .expect("elapsed sum parses as f64");
+    assert!(elapsed_sum > 0.0);
 
     // readable primitive with a non-conformant unit: `items` is not an
     // `_`-separated suffix of `worker_queue_depth`, so the `# UNIT` line is
