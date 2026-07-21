@@ -187,11 +187,18 @@ fn vmrange_samples(
         let vmrange = format!("{:.3e}...{:.3e}", bucket.lower, bucket.upper);
         let mut bucket_labels = labels.to_vec();
         bucket_labels.push(("vmrange".to_owned(), vmrange));
+        // Exemplar parity with the `le` render: the sampled per-bucket
+        // exemplar rides the bucket sample in either encoding.
+        let exemplar = bucket.exemplar.as_ref().map(|exemplar| MetricExemplar {
+            labels: exemplar.labels.clone(),
+            value: exemplar.value,
+            timestamp: exemplar.timestamp_seconds,
+        });
         samples.push(MetricSample {
             name: bucket_name.clone(),
             labels: bucket_labels,
             value: MetricSampleValue::from(bucket.count),
-            exemplar: None,
+            exemplar,
         });
     }
     push_sum_count(&mut samples, name, labels, snapshot.sum, snapshot.count);

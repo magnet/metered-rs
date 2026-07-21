@@ -148,6 +148,42 @@ fn histogram_render_resolves_family_intent_against_document_capability() {
     assert_eq!(vmrange_total, 4);
 }
 
+/// Exemplar parity between the two bucket renders: the sampled per-bucket
+/// exemplar attaches to the bucket sample in the `vmrange` encoding exactly
+/// as it does under `le`.
+#[test]
+fn vmrange_buckets_carry_bucket_exemplars() {
+    use metered::Exemplar;
+
+    let dynamic = DynamicExponentialHistogram::with_params(5, 256);
+    dynamic.observe_with_exemplar(
+        0.25,
+        Exemplar {
+            labels: vec![("trace_id".to_owned(), "abc123".to_owned())],
+            value: 0.25,
+            timestamp_seconds: None,
+        },
+        false,
+    );
+
+    let mut registry = Registry::new();
+    registry.register(
+        metric("dynamic_seconds")
+            .source(&dynamic)
+            .help("Dynamic exponential"),
+    );
+
+    let vm = encode(&registry, HistogramProfile::VmRange);
+    let bucket_line = vm
+        .lines()
+        .find(|line| line.starts_with("dynamic_seconds_bucket{vmrange="))
+        .expect("vmrange bucket renders");
+    assert!(
+        bucket_line.contains("# {trace_id=\"abc123\"} 0.25"),
+        "vmrange bucket should carry the sampled exemplar, got: {bucket_line}"
+    );
+}
+
 #[test]
 fn classic_bucket_histogram_stays_le_even_in_vmrange_profile() {
     let h = BucketHistogram::default();
