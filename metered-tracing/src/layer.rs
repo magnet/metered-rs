@@ -11,7 +11,8 @@ use crate::TracingMetrics;
 use metered::Exemplar;
 use std::sync::Arc;
 use std::time::Instant;
-use tracing::{Id, Subscriber};
+use tracing::subscriber::Interest;
+use tracing::{Id, Metadata, Subscriber};
 use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::registry::LookupSpan;
 
@@ -26,6 +27,62 @@ impl<P: ExemplarProvider> TracingMetrics<P> {
     #[cfg(not(feature = "exemplar"))]
     fn close_exemplar(&self, _fields: &SpanFields) -> Option<Exemplar> {
         None
+    }
+
+    /// A per-layer [`Filter`](tracing_subscriber::layer::Filter) scoping this
+    /// layer to the callsites it can actually use: spans a recorder claims by
+    /// name (or every span, when the exemplar provider captures span fields).
+    ///
+    /// **Mount the layer with this filter**
+    /// (`metrics.with_filter(metrics.recorded_spans_filter())`), not bare.
+    /// A bare mount reports the default `Interest::always` for every callsite
+    /// in the process, which defeats tracing's per-callsite cache: every
+    /// *disabled* event and span (h2/hyper/tower emit hundreds per RPC at
+    /// trace level) then pays full dynamic filter dispatch on the hot path.
+    ///
+    /// A per-layer filter is deliberately used instead of implementing
+    /// [`Layer::enabled`]/[`Layer::register_callsite`] on the layer itself:
+    /// those have *global* semantics — a plain layer returning `false` /
+    /// `Interest::never` can veto an event or span for **every** layer in the
+    /// subscriber (`Vec<Layer>::enabled` is `all(..)`), silently dropping log
+    /// lines and exported spans other layers wanted. The per-layer filter
+    /// scopes the disinterest to this layer alone while still restoring the
+    /// callsite cache.
+    pub fn recorded_spans_filter(&self) -> RecordedSpansFilter {
+        RecordedSpansFilter {
+            dispatch: Arc::clone(&self.dispatch),
+            all_spans: self.exemplar.captures_span_fields(),
+        }
+    }
+}
+
+/// The per-layer filter returned by
+/// [`TracingMetrics::recorded_spans_filter`]: interested only in spans whose
+/// name is in the recorder dispatch table (or all spans when the exemplar
+/// provider captures span fields), and never in events.
+#[derive(Clone, Debug)]
+pub struct RecordedSpansFilter {
+    dispatch: Arc<crate::dispatch::DispatchTable>,
+    all_spans: bool,
+}
+
+impl RecordedSpansFilter {
+    fn wants(&self, metadata: &Metadata<'_>) -> bool {
+        metadata.is_span() && (self.all_spans || self.dispatch.contains_key(metadata.name()))
+    }
+}
+
+impl<S: Subscriber> tracing_subscriber::layer::Filter<S> for RecordedSpansFilter {
+    fn enabled(&self, metadata: &Metadata<'_>, _cx: &Context<'_, S>) -> bool {
+        self.wants(metadata)
+    }
+
+    fn callsite_enabled(&self, metadata: &'static Metadata<'static>) -> Interest {
+        if self.wants(metadata) {
+            Interest::always()
+        } else {
+            Interest::never()
+        }
     }
 }
 

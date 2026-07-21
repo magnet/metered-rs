@@ -50,6 +50,7 @@ mod dispatch;
 mod exemplar;
 mod fields;
 mod layer;
+pub use layer::RecordedSpansFilter;
 mod recorder;
 mod span_metric;
 
