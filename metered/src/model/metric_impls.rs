@@ -148,6 +148,13 @@ impl Metric for FixedExponentialHistogram {
         // (cumulative) or `vmrange` (non-cumulative) as configured.
         values.exponential_histogram(name, labels, &self.snapshot());
     }
+
+    fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
+        schema.add_family(name, self.metric_type(), labels);
+        // A fixed layout is shared by every series of the family, so classic
+        // cumulative `le` aggregation is sound — declare it explicitly.
+        schema.set_render_for(name, crate::HistogramRender::Le);
+    }
 }
 
 impl Metric for DynamicExponentialHistogram {
@@ -157,6 +164,16 @@ impl Metric for DynamicExponentialHistogram {
 
     fn collect_metric(&self, name: &str, labels: &[(&str, &str)], values: &mut MetricValues) {
         values.exponential_histogram(name, labels, &self.snapshot());
+    }
+
+    fn describe_metric(&self, name: &str, labels: &[(&str, &str)], schema: &mut MetricSchema) {
+        schema.add_family(name, self.metric_type(), labels);
+        // Every series rescales its layout independently, so cumulative `le`
+        // buckets are NOT aggregation-sound across series
+        // (`sum by (le)` merges mismatched lattices). Non-cumulative
+        // `vmrange` buckets carry their bounds and merge correctly; declare
+        // them so a vmrange-capable sink renders the sound form.
+        schema.set_render_for(name, crate::HistogramRender::VmRange);
     }
 
     // The off-hot-path downscale and exemplar-window reset are driven by the

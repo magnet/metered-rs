@@ -81,6 +81,26 @@ impl fmt::Display for SchemaError {
 
 impl std::error::Error for SchemaError {}
 
+/// How a histogram family prefers its buckets rendered.
+///
+/// A family-level *declaration*, like [`Unit`]: backends declare their natural
+/// form at describe time (a dynamic exponential histogram is only
+/// aggregation-sound as non-cumulative `vmrange`; a fixed layout is sound as
+/// classic `le`), and the sink resolves the declaration against the
+/// exposition's capability (whether the scraper can ingest `vmrange` at all).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum HistogramRender {
+    /// No declaration: the sink's document-level default applies (classic
+    /// `le` in the OpenMetrics encoder).
+    #[default]
+    Auto,
+    /// Classic cumulative `le` buckets.
+    Le,
+    /// VictoriaMetrics non-cumulative `vmrange` buckets, when the exposition
+    /// allows them; degrades to `le` otherwise.
+    VmRange,
+}
+
 /// One OpenMetrics family in a [`MetricSchema`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MetricFamilySchema {
@@ -94,6 +114,9 @@ pub struct MetricFamilySchema {
     pub unit: Option<Unit>,
     /// Label names the family may emit, sorted for deterministic output.
     pub labels: Vec<String>,
+    /// The declared bucket rendering for histogram families
+    /// ([`HistogramRender::Auto`] for everything else).
+    pub histogram_render: HistogramRender,
 }
 
 /// A registry's metric contract.
@@ -101,6 +124,9 @@ pub struct MetricFamilySchema {
 pub struct MetricSchema {
     families: Vec<MetricFamilySchema>,
     metadata: HashMap<String, (Option<Help>, Option<Unit>)>,
+    /// Render declarations recorded before their family was added (the
+    /// `set_render_for`-then-`add_family` ordering, mirroring `metadata`).
+    renders: HashMap<String, HistogramRender>,
     /// Integrity problems recorded while building the schema (type conflicts,
     /// undescribed entries), kept so the scrape path never fails while
     /// [`validate`](MetricSchema::validate) can still surface them.
@@ -169,14 +195,31 @@ impl MetricSchema {
         }
 
         let (help, unit) = self.metadata.remove(name).unwrap_or((None, None));
+        let histogram_render = self.renders.remove(name).unwrap_or_default();
         self.families.push(MetricFamilySchema {
             name: name.to_owned(),
             metric_type,
             help,
             unit,
             labels: label_names,
+            histogram_render,
         });
         self.families.sort_by(|a, b| a.name.cmp(&b.name));
+    }
+
+    /// Declares the bucket rendering for a histogram `family`, before or after
+    /// the family is added (the [`set_help_for`](MetricSchema::set_help_for) /
+    /// [`set_unit_for`](MetricSchema::set_unit_for) style).
+    pub fn set_render_for(&mut self, family: &str, render: HistogramRender) {
+        if let Some(existing) = self
+            .families
+            .iter_mut()
+            .find(|existing| existing.name == family)
+        {
+            existing.histogram_render = render;
+        } else {
+            self.renders.insert(family.to_owned(), render);
+        }
     }
 
     /// Adds a family whose labels are `const_labels` (carrying values) plus

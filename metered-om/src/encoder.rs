@@ -81,11 +81,43 @@ impl<'a> OpenMetricsEncoder<'a> {
             write_sample(&mut *self.out, sample)?;
         }
         for histogram in values.histograms() {
-            for sample in histogram_samples(histogram, self.profile) {
+            let resolved = resolve_profile(self.profile, schema, &histogram.name);
+            for sample in histogram_samples(histogram, resolved) {
                 write_sample(&mut *self.out, &sample)?;
             }
         }
         Ok(())
+    }
+}
+
+/// Resolves a histogram family's effective render: the family's declared
+/// intent ([`metered::HistogramRender`], from the schema) gated by the
+/// document's capability (`profile` — whether the scraper can ingest
+/// `vmrange` at all).
+///
+/// | declared \ document | `Le` (default)  | `VmRange`-capable |
+/// |---------------------|-----------------|-------------------|
+/// | `Auto`              | `le`            | `vmrange`         |
+/// | `Le`                | `le`            | `le`              |
+/// | `VmRange`           | `le` (degraded) | `vmrange`         |
+pub(crate) fn resolve_profile(
+    document: HistogramProfile,
+    schema: &MetricSchema,
+    family: &str,
+) -> HistogramProfile {
+    match document {
+        // The scraper cannot ingest vmrange: every declaration degrades to le.
+        HistogramProfile::Le => HistogramProfile::Le,
+        HistogramProfile::VmRange => match schema
+            .family(family)
+            .map(|family| family.histogram_render)
+            .unwrap_or_default()
+        {
+            metered::HistogramRender::Le => HistogramProfile::Le,
+            metered::HistogramRender::Auto | metered::HistogramRender::VmRange => {
+                HistogramProfile::VmRange
+            }
+        },
     }
 }
 

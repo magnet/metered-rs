@@ -106,7 +106,7 @@ pub use meta::{Help, LabelName, Name, Scalar, Unit};
 #[doc(no_inline)]
 pub use metric_tree::{join_name, Metric, MetricTree, MetricTreeExt, MetricTreeMeta, MetricType};
 #[doc(no_inline)]
-pub use schema::{MetricFamilySchema, MetricSchema, SchemaError};
+pub use schema::{HistogramRender, MetricFamilySchema, MetricSchema, SchemaError};
 #[doc(no_inline)]
 pub use values::{
     HistogramData, HistogramValue, MetricExemplar, MetricSample, MetricSampleValue, MetricValues,

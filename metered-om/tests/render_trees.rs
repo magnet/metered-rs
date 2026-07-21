@@ -96,7 +96,7 @@ fn registry_registers_direct_tree_source_entry() {
 }
 
 #[test]
-fn exponential_histograms_render_le_by_default_and_vmrange_on_request() {
+fn histogram_render_resolves_family_intent_against_document_capability() {
     let fixed = FixedExponentialHistogram::new(0.001, 10.0, 4);
     let dynamic = DynamicExponentialHistogram::with_params(5, 256);
     for v in [0.002, 0.05, 0.4, 3.0] {
@@ -116,7 +116,8 @@ fn exponential_histograms_render_le_by_default_and_vmrange_on_request() {
             .help("Dynamic exponential"),
     );
 
-    // Default profile: classic cumulative `le` buckets.
+    // `Le` document capability: the scraper cannot ingest vmrange, so every
+    // declaration degrades to classic cumulative `le` buckets.
     let le = encode(&registry, HistogramProfile::Le);
     assert!(le.contains("# TYPE fixed_seconds histogram"));
     assert!(le.contains("fixed_seconds_bucket{le="));
@@ -124,18 +125,23 @@ fn exponential_histograms_render_le_by_default_and_vmrange_on_request() {
     assert!(le.contains("dynamic_seconds_bucket{le="));
     assert!(!le.contains("vmrange"));
 
-    // VictoriaMetrics profile: non-cumulative `vmrange` buckets.
+    // vmrange-capable document: each family renders its *declared* form.
+    // The fixed layout is shared by all series, so it keeps the classic
+    // cross-service `le` contract; the dynamic backend rescales per series,
+    // so it renders the aggregation-sound `vmrange` form.
     let vm = encode(&registry, HistogramProfile::VmRange);
     assert!(vm.contains("# TYPE fixed_seconds histogram"));
-    assert!(vm.contains("fixed_seconds_bucket{vmrange=\""));
+    assert!(vm.contains("fixed_seconds_bucket{le="));
+    assert!(!vm.contains("fixed_seconds_bucket{vmrange=\""));
     assert!(vm.contains("dynamic_seconds_bucket{vmrange=\""));
+    assert!(!vm.contains("dynamic_seconds_bucket{le="));
     assert!(vm.contains("fixed_seconds_count 4"));
-    assert!(!vm.contains("{le="));
+    assert!(vm.contains("dynamic_seconds_count 4"));
 
     // The non-cumulative vmrange bucket counts sum to the total.
     let vmrange_total: u64 = vm
         .lines()
-        .filter(|l| l.starts_with("fixed_seconds_bucket{vmrange="))
+        .filter(|l| l.starts_with("dynamic_seconds_bucket{vmrange="))
         .filter_map(|l| l.rsplit(' ').next())
         .filter_map(|n| n.parse::<u64>().ok())
         .sum();

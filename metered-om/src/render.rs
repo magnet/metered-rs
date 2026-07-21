@@ -157,7 +157,12 @@ impl<'a> OpenMetricsRender<'a> {
                         *next += 1;
                         used += 1;
                     } else if let Some(histogram) = self.values.histograms().get(*index) {
-                        *pending = histogram_samples(histogram, self.profile);
+                        let resolved = crate::encoder::resolve_profile(
+                            self.profile,
+                            self.schema,
+                            &histogram.name,
+                        );
+                        *pending = histogram_samples(histogram, resolved);
                         *next = 0;
                         *index += 1;
                     } else {
