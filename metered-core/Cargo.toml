@@ -24,6 +24,9 @@ arc-swap = "1"
 
 [dev-dependencies]
 # The facade re-exports this crate wholesale, so doctests written against the
+# public `metered::…` paths (including derive-emitted code) compile unchanged.
+# Path-only on purpose: Cargo strips it at publish, avoiding a version cycle.
+metered = { path = "../metered" }
 rand = "0.8"
 proptest = "1.0"
 serde = { version = "1.0", features = ["derive"] }

@@ -66,5 +66,3 @@ fn main() {
         Histogram::count(&dynamic)
     );
 }
-
-extern crate metered_core as metered;
